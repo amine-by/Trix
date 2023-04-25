@@ -15,6 +15,8 @@ import com.branper.trix.model.GameStatus;
 import com.branper.trix.model.Kingdom;
 import com.branper.trix.model.GamePlay;
 import com.branper.trix.model.Player;
+import com.branper.trix.model.Rank;
+import com.branper.trix.model.Suit;
 import com.branper.trix.storage.GameStorage;
 
 import lombok.AllArgsConstructor;
@@ -84,6 +86,7 @@ public class GameService {
 		} else
 			game.setBoard(new Card[4]);
 
+		player.getAvailableGames().remove(gamePlay.getMove());
 		game.setStatus(GameStatus.ROUND_IN_PROGRESS);
 		return game;
 	}
@@ -132,10 +135,14 @@ public class GameService {
 						addedScore = -50;
 						if (player.getLogin() == gamePlay.getLogin())
 							addedScore *= 2;
-						player.setScore(addedScore);
-						game.distributeCards();
-						game.nextGameOwner();
-						game.setStatus(GameStatus.KINGDOM_SELECTION);
+						player.setScore(player.getScore() + addedScore);
+						if (game.isGameEnded())
+							game.setStatus(GameStatus.FINISHED);
+						else {
+							game.distributeCards();
+							game.nextGameOwnerAndInitTurn();
+							game.setStatus(GameStatus.KINGDOM_SELECTION);
+						}
 					}
 				} else if (cardRankValue != 7)
 					game.determineTrixTurn();
@@ -144,7 +151,52 @@ public class GameService {
 				throw new InvalidParamException("Selected card is not playable");
 			}
 		} else {
+			final int TURN_IN_CYCLE = Math.abs(game.getTurn() - game.getGameOwner());
+			Card[] normalBoard = (Card[]) game.getBoard();
+			if (TURN_IN_CYCLE != 0 && playedCard.getSuit() != normalBoard[0].getSuit()
+					&& player.suitNumberInHand(playedCard.getSuit()) > 0)
+				throw new InvalidParamException("Selected card is not playable");
 
+			if (game.getCurrentKingdom() == Kingdom.KING_OF_HEARTS && playedCard.getRank() == Rank.KING
+					&& playedCard.getSuit() == Suit.HEART && player.getHand().size() == 8 && (TURN_IN_CYCLE == 0
+							|| (game.boardContainsSuit(Suit.HEART) && player.suitNumberInHand(Suit.HEART) == 1)))
+				throw new InvalidParamException("King of heart is not playable");
+
+			if (game.getCurrentKingdom() == Kingdom.DIAMONDS && TURN_IN_CYCLE == 0
+					&& playedCard.getSuit() == Suit.DIAMOND && game.collectedCardsContainsSuit(Suit.DIAMOND))
+				throw new InvalidParamException("Diamond cards are not playable yet");
+
+			game.playNormalCard(playedCard, game.getTurn());
+
+			if (TURN_IN_CYCLE == 3) {
+				int addedScore;
+				switch (game.getCurrentKingdom()) {
+				case KING_OF_HEARTS:
+					final int KING_OF_HEART_INDEX = game.boardContainsCardAt(Suit.HEART, Rank.KING);
+					if (KING_OF_HEART_INDEX != -1) {
+						addedScore = game.getTurn() == game.getGameOwner() ? 200 : 100;
+						game.getPlayers().get(KING_OF_HEART_INDEX)
+								.setScore(game.getPlayers().get(KING_OF_HEART_INDEX).getScore() + addedScore);
+						if (game.isGameEnded())
+							game.setStatus(GameStatus.FINISHED);
+						else {
+							game.distributeCards();
+							game.nextGameOwnerAndInitTurn();
+							game.setStatus(GameStatus.KINGDOM_SELECTION);
+						}
+					} else {
+						game.setBoard(new Card[4]);
+						game.nextTurn();
+					}
+					break;
+				case QUEENS:
+					break;
+				case DIAMONDS:
+					break;
+				default:
+					break;
+				}
+			}
 		}
 
 		return game;

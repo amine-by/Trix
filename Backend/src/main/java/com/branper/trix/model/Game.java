@@ -46,8 +46,9 @@ public class Game {
 		turn = (turn < 3) ? turn + 1 : 0;
 	}
 
-	public void nextGameOwner() {
+	public void nextGameOwnerAndInitTurn() {
 		gameOwner = (gameOwner < 3) ? gameOwner + 1 : 0;
+		turn = gameOwner < 3 ? gameOwner + 1 : 0;
 	}
 
 	public void determineTrixTurn() {
@@ -67,11 +68,46 @@ public class Game {
 		board[card] = "true";
 	}
 
+	public void playNormalCard(Card card, int position) {
+		board[position] = card;
+	}
+
 	public int remainingPlayersNumber() {
 		int result = 0;
 		for (Player player : players)
 			if (player.getHand().size() == 0)
 				result++;
 		return result;
+	}
+
+	public boolean boardContainsSuit(Suit suit) {
+		for (Card card : (Card[]) board)
+			if (card != null && card.getSuit() == suit)
+				return true;
+		return false;
+	}
+
+	public int boardContainsCardAt(Suit suit, Rank rank) {
+		for (int i = 0; i < board.length; i++) {
+			Card card = (Card) board[i];
+			if (card != null && card.getSuit() == suit && card.getRank() == rank)
+				return i;
+		}
+		return -1;
+	}
+
+	public boolean collectedCardsContainsSuit(Suit suit) {
+		for (Player player : players)
+			for (Card card : player.getCollectedCards())
+				if (card != null && card.getSuit() == suit)
+					return true;
+		return false;
+	}
+	
+	public boolean isGameEnded() {
+		for (Player player : players)
+			if(player.getAvailableGames().size() > 0)
+				return false;
+		return true;
 	}
 }

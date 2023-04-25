@@ -27,4 +27,12 @@ public class Player {
 		}
 		return false;
 	}
+
+	public int suitNumberInHand(Suit suit) {
+		int result = 0;
+		for (Card card : hand)
+			if (card.getSuit() == suit)
+				result++;
+		return result;
+	}
 }
