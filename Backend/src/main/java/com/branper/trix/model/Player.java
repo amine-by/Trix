@@ -13,7 +13,7 @@ public class Player {
 	private ArrayList<Card> collectedCards;
 	private ArrayList<Kingdom> availableGames;
 
-	public void intializePlayer(String login) {
+	public void initializePlayer(String login) {
 		this.login = login;
 		this.score = 0;
 		this.availableGames = new ArrayList<Kingdom>(

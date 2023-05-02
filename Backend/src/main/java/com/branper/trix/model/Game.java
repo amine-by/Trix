@@ -54,7 +54,7 @@ public class Game {
 	public void determineTrixTurn() {
 		ArrayList<Card> playerHand = players.get(turn).getHand();
 		for (Card card : playerHand) {
-			int cardRankValue = card.getRank().getValue();
+			int cardRankValue = card.getRank().getTrixValue();
 			int cardSuitValue = card.getSuit().getValue();
 			if (cardRankValue == 4 || cardRankValue > 4 && (board[cardSuitValue * 8 + cardRankValue - 1] == "true")
 					|| cardRankValue < 4 && (board[cardSuitValue * 8 + cardRankValue + 1] == "true"))
@@ -75,7 +75,7 @@ public class Game {
 	public int remainingPlayersNumber() {
 		int result = 0;
 		for (Player player : players)
-			if (player.getHand().size() == 0)
+			if (player.getHand().size() > 0)
 				result++;
 		return result;
 	}
@@ -87,13 +87,12 @@ public class Game {
 		return false;
 	}
 
-	public int boardContainsCardAt(Suit suit, Rank rank) {
-		for (int i = 0; i < board.length; i++) {
-			Card card = (Card) board[i];
+	public boolean boardContainsCard(Suit suit, Rank rank) {
+		for (Card card : (Card[]) board) {
 			if (card != null && card.getSuit() == suit && card.getRank() == rank)
-				return i;
+				return true;
 		}
-		return -1;
+		return false;
 	}
 
 	public boolean collectedCardsContainsSuit(Suit suit) {
@@ -103,11 +102,29 @@ public class Game {
 					return true;
 		return false;
 	}
-	
+
 	public boolean isGameEnded() {
 		for (Player player : players)
-			if(player.getAvailableGames().size() > 0)
+			if (player.getAvailableGames().size() > 0)
 				return false;
 		return true;
+	}
+
+	public int highestPlayerOnBoard() {
+		int result = 0;
+		for (int i = 1; i < board.length; i++) {
+			Card[] normalBoard = (Card[]) board;
+			if (normalBoard[i].getSuit() == normalBoard[0].getSuit()
+					&& normalBoard[i].getRank().getNormalValue() > result)
+				result = normalBoard[i].getRank().getNormalValue();
+		}
+		return result;
+	}
+	
+	public int hasCapot() {
+		for (int i = 0; i < 4; i++)
+			if(players.get(i).getCollectedCards().size() == 32)
+				return i;
+		return -1;
 	}
 }

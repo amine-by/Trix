@@ -24,10 +24,12 @@ import lombok.AllArgsConstructor;
 @Service
 @AllArgsConstructor
 public class GameService {
+	// Creates a game and initializes the first player
 	public Game createGame(String login) {
 		Game game = new Game();
 		Player player = new Player();
-		player.intializePlayer(login);
+		// Initializes the first player score, hand, and available games (kingdoms)
+		player.initializePlayer(login);
 		game.setGameId(UUID.randomUUID().toString());
 		game.getPlayers().add(player);
 		game.setGameOwner(0);
@@ -37,6 +39,8 @@ public class GameService {
 		return game;
 	}
 
+	// Connects a player to the game and initializes them
+	// Starts the game in case it finds the last player
 	public Game connectToGame(String login, String gameId) throws InvalidParamException, InvalidGameException {
 		if (!GameStorage.getInstance().getGames().containsKey(gameId))
 			throw new InvalidParamException("Game does not exist");
@@ -47,8 +51,12 @@ public class GameService {
 			throw new InvalidGameException("Game is full");
 
 		Player player = new Player();
-		player.intializePlayer(login);
+		// Initializes another player score, hand, and available games (kingdoms)
+		player.initializePlayer(login);
 		game.getPlayers().add(player);
+
+		// Starts the game in case it finds the last player and distributes cards to the
+		// players
 		if (game.getPlayers().size() == 4) {
 			game.setStatus(GameStatus.KINGDOM_SELECTION);
 			game.distributeCards();
@@ -57,6 +65,7 @@ public class GameService {
 		return game;
 	}
 
+	// Enables the game owner to select a game (kingdom)
 	public Game gameSelect(GamePlay gamePlay)
 			throws GameNotFoundException, InvalidGameException, InvalidParamException, InvalidMoveException {
 
@@ -114,7 +123,7 @@ public class GameService {
 			throw new InvalidParamException("Selected card is not available");
 
 		if (game.getCurrentKingdom() == Kingdom.TRIX) {
-			int cardRankValue = playedCard.getRank().getValue();
+			int cardRankValue = playedCard.getRank().getTrixValue();
 			int cardSuitValue = playedCard.getSuit().getValue();
 			if (cardRankValue == 4
 					|| cardRankValue > 4 && (game.getBoard()[cardSuitValue * 8 + cardRankValue - 1] == "true")
@@ -130,12 +139,16 @@ public class GameService {
 						if (player.getLogin() == gamePlay.getLogin())
 							addedScore *= 2;
 						player.setScore(addedScore);
+						if (player.getScore() % 1000 == 0)
+							player.setScore(0);
 						game.determineTrixTurn();
 					} else if (game.remainingPlayersNumber() == 2) {
 						addedScore = -50;
 						if (player.getLogin() == gamePlay.getLogin())
 							addedScore *= 2;
 						player.setScore(player.getScore() + addedScore);
+						if (player.getScore() % 1000 == 0)
+							player.setScore(0);
 						if (game.isGameEnded())
 							game.setStatus(GameStatus.FINISHED);
 						else {
@@ -169,14 +182,17 @@ public class GameService {
 			game.playNormalCard(playedCard, game.getTurn());
 
 			if (TURN_IN_CYCLE == 3) {
+				final int RECIVING_PLAYER_INDEX = game.highestPlayerOnBoard();
+				final int CAPOT = game.hasCapot();
 				int addedScore;
-				switch (game.getCurrentKingdom()) {
-				case KING_OF_HEARTS:
-					final int KING_OF_HEART_INDEX = game.boardContainsCardAt(Suit.HEART, Rank.KING);
-					if (KING_OF_HEART_INDEX != -1) {
-						addedScore = game.getTurn() == game.getGameOwner() ? 200 : 100;
-						game.getPlayers().get(KING_OF_HEART_INDEX)
-								.setScore(game.getPlayers().get(KING_OF_HEART_INDEX).getScore() + addedScore);
+				int collectedCardsFound;
+				if (game.getCurrentKingdom() == Kingdom.KING_OF_HEARTS) {
+					if (game.boardContainsCard(Suit.HEART, Rank.KING)) {
+						addedScore = RECIVING_PLAYER_INDEX == game.getGameOwner() ? 200 : 100;
+						game.getPlayers().get(RECIVING_PLAYER_INDEX)
+								.setScore(game.getPlayers().get(RECIVING_PLAYER_INDEX).getScore() + addedScore);
+						if (game.getPlayers().get(RECIVING_PLAYER_INDEX).getScore() % 1000 == 0)
+							game.getPlayers().get(RECIVING_PLAYER_INDEX).setScore(0);
 						if (game.isGameEnded())
 							game.setStatus(GameStatus.FINISHED);
 						else {
@@ -188,13 +204,280 @@ public class GameService {
 						game.setBoard(new Card[4]);
 						game.nextTurn();
 					}
-					break;
-				case QUEENS:
-					break;
-				case DIAMONDS:
-					break;
-				default:
-					break;
+				}
+
+				if (game.getCurrentKingdom() == Kingdom.QUEENS) {
+					if (player.getHand().size() == 0) {
+						if (CAPOT != -1) {
+							addedScore = 160;
+							for (int i = 0; i < 4; i++) {
+								if (i != CAPOT) {
+									if (i == game.getGameOwner())
+										game.getPlayers().get(i)
+												.setScore(game.getPlayers().get(i).getScore() + addedScore * 2);
+									else
+										game.getPlayers().get(i)
+												.setScore(game.getPlayers().get(i).getScore() + addedScore);
+									if (game.getPlayers().get(i).getScore() % 1000 == 0)
+										game.getPlayers().get(i).setScore(0);
+								}
+							}
+						} else {
+							collectedCardsFound = 0;
+							for (int i = 0; i < 4; i++) {
+								addedScore = 0;
+								for (Card card : game.getPlayers().get(i).getCollectedCards()) {
+									if (card.getRank() == Rank.QUEEN) {
+										addedScore += 20;
+										collectedCardsFound++;
+										if (addedScore == 80)
+											addedScore *= 2;
+									}
+									if (collectedCardsFound == 4)
+										break;
+								}
+								if (addedScore > 0) {
+									if (i == game.getGameOwner())
+										addedScore *= 2;
+									game.getPlayers().get(i).setScore(game.getPlayers().get(i).getScore() + addedScore);
+									if (game.getPlayers().get(i).getScore() % 1000 == 0)
+										game.getPlayers().get(i).setScore(0);
+								}
+								if (collectedCardsFound == 4)
+									break;
+							}
+						}
+						if (game.isGameEnded())
+							game.setStatus(GameStatus.FINISHED);
+						else {
+							game.distributeCards();
+							game.nextGameOwnerAndInitTurn();
+							game.setStatus(GameStatus.KINGDOM_SELECTION);
+						}
+					} else {
+						collectedCardsFound = 0;
+						for (int i = 0; i < 4; i++) {
+							addedScore = 0;
+							for (Card card : game.getPlayers().get(i).getCollectedCards()) {
+								if (card.getRank() == Rank.QUEEN) {
+									addedScore += 20;
+									collectedCardsFound++;
+									if (addedScore == 80)
+										addedScore *= 2;
+								}
+								if (collectedCardsFound == 4)
+									break;
+							}
+							if (addedScore > 0) {
+								if (i == game.getGameOwner())
+									addedScore *= 2;
+								game.getPlayers().get(i).setScore(game.getPlayers().get(i).getScore() + addedScore);
+								if (game.getPlayers().get(i).getScore() % 1000 == 0)
+									game.getPlayers().get(i).setScore(0);
+							}
+							if (collectedCardsFound == 4)
+								break;
+						}
+						if (collectedCardsFound == 4)
+							if (game.isGameEnded())
+								game.setStatus(GameStatus.FINISHED);
+							else {
+								game.distributeCards();
+								game.nextGameOwnerAndInitTurn();
+								game.setStatus(GameStatus.KINGDOM_SELECTION);
+							}
+						else {
+							game.setBoard(new Card[4]);
+							game.nextTurn();
+						}
+					}
+				}
+
+				if (game.getCurrentKingdom() == Kingdom.DIAMONDS) {
+					if (player.getHand().size() == 0) {
+						if (CAPOT != -1) {
+							addedScore = 80;
+							for (int i = 0; i < 4; i++) {
+								if (i != CAPOT) {
+									if (i == game.getGameOwner())
+										game.getPlayers().get(i)
+												.setScore(game.getPlayers().get(i).getScore() + addedScore * 2);
+									else
+										game.getPlayers().get(i)
+												.setScore(game.getPlayers().get(i).getScore() + addedScore);
+									if (game.getPlayers().get(i).getScore() % 1000 == 0)
+										game.getPlayers().get(i).setScore(0);
+								}
+							}
+
+						} else {
+							collectedCardsFound = 0;
+							for (int i = 0; i < 4; i++) {
+								addedScore = 0;
+								for (Card card : game.getPlayers().get(i).getCollectedCards()) {
+									if (card.getSuit() == Suit.DIAMOND) {
+										addedScore += 10;
+										collectedCardsFound++;
+									}
+									if (collectedCardsFound == 8)
+										break;
+								}
+								if (addedScore > 0) {
+									if (i == game.getGameOwner())
+										addedScore *= 2;
+									game.getPlayers().get(i).setScore(game.getPlayers().get(i).getScore() + addedScore);
+									if (game.getPlayers().get(i).getScore() % 1000 == 0)
+										game.getPlayers().get(i).setScore(0);
+								}
+								if (collectedCardsFound == 8)
+									break;
+							}
+						}
+
+						if (game.isGameEnded())
+							game.setStatus(GameStatus.FINISHED);
+						else {
+							game.distributeCards();
+							game.nextGameOwnerAndInitTurn();
+							game.setStatus(GameStatus.KINGDOM_SELECTION);
+						}
+					} else {
+						collectedCardsFound = 0;
+						for (int i = 0; i < 4; i++) {
+							addedScore = 0;
+							for (Card card : game.getPlayers().get(i).getCollectedCards()) {
+								if (card.getSuit() == Suit.DIAMOND) {
+									addedScore += 10;
+									collectedCardsFound++;
+								}
+								if (collectedCardsFound == 8)
+									break;
+							}
+							if (addedScore > 0) {
+								if (i == game.getGameOwner())
+									addedScore *= 2;
+								game.getPlayers().get(i).setScore(game.getPlayers().get(i).getScore() + addedScore);
+								if (game.getPlayers().get(i).getScore() % 1000 == 0)
+									game.getPlayers().get(i).setScore(0);
+							}
+							if (collectedCardsFound == 8)
+								break;
+						}
+						if (collectedCardsFound == 8)
+							if (game.isGameEnded())
+								game.setStatus(GameStatus.FINISHED);
+							else {
+								game.distributeCards();
+								game.nextGameOwnerAndInitTurn();
+								game.setStatus(GameStatus.KINGDOM_SELECTION);
+							}
+						else {
+							game.setBoard(new Card[4]);
+							game.nextTurn();
+						}
+					}
+
+					if (game.getCurrentKingdom() == Kingdom.GENERAL) {
+						if (player.getHand().size() == 0) {
+							if (CAPOT != -1) {
+								addedScore = 260;
+								for (int i = 0; i < 4; i++) {
+									if (i != CAPOT) {
+										if (i == game.getGameOwner())
+											game.getPlayers().get(i)
+													.setScore(game.getPlayers().get(i).getScore() + addedScore * 2);
+										else
+											game.getPlayers().get(i)
+													.setScore(game.getPlayers().get(i).getScore() + addedScore);
+										if (game.getPlayers().get(i).getScore() % 1000 == 0)
+											game.getPlayers().get(i).setScore(0);
+									}
+								}
+							} else {
+								collectedCardsFound = 0;
+								for (int i = 0; i < 4; i++) {
+									addedScore = 0;
+									for (Card card : game.getPlayers().get(i).getCollectedCards()) {
+										if (card.getSuit() == Suit.DIAMOND) {
+											addedScore += 10;
+											collectedCardsFound++;
+										}
+										if (card.getRank() == Rank.QUEEN) {
+											addedScore += 20;
+											collectedCardsFound++;
+										}
+										if (card.getRank() == Rank.KING && card.getSuit() == Suit.HEART) {
+											addedScore += 100;
+											collectedCardsFound++;
+										}
+										if (collectedCardsFound == 13)
+											break;
+									}
+									if (addedScore > 0) {
+										if (i == game.getGameOwner())
+											addedScore *= 2;
+										game.getPlayers().get(i)
+												.setScore(game.getPlayers().get(i).getScore() + addedScore);
+										if (game.getPlayers().get(i).getScore() % 1000 == 0)
+											game.getPlayers().get(i).setScore(0);
+									}
+									if (collectedCardsFound == 13)
+										break;
+								}
+							}
+
+							if (game.isGameEnded())
+								game.setStatus(GameStatus.FINISHED);
+							else {
+								game.distributeCards();
+								game.nextGameOwnerAndInitTurn();
+								game.setStatus(GameStatus.KINGDOM_SELECTION);
+							}
+
+						} else {
+							collectedCardsFound = 0;
+							for (int i = 0; i < 4; i++) {
+								addedScore = 0;
+								for (Card card : game.getPlayers().get(i).getCollectedCards()) {
+									if (card.getSuit() == Suit.DIAMOND) {
+										addedScore += 10;
+										collectedCardsFound++;
+									}
+									if (card.getRank() == Rank.QUEEN) {
+										addedScore += 20;
+										collectedCardsFound++;
+									}
+									if (card.getRank() == Rank.KING && card.getSuit() == Suit.HEART) {
+										addedScore += 100;
+										collectedCardsFound++;
+									}
+									if (collectedCardsFound == 13)
+										break;
+								}
+								if (addedScore > 0) {
+									if (i == game.getGameOwner())
+										addedScore *= 2;
+									game.getPlayers().get(i).setScore(game.getPlayers().get(i).getScore() + addedScore);
+									if (game.getPlayers().get(i).getScore() % 1000 == 0)
+										game.getPlayers().get(i).setScore(0);
+								}
+								if (collectedCardsFound == 13)
+									break;
+							}
+							if (collectedCardsFound == 13)
+								if (game.isGameEnded())
+									game.setStatus(GameStatus.FINISHED);
+								else {
+									game.distributeCards();
+									game.nextGameOwnerAndInitTurn();
+									game.setStatus(GameStatus.KINGDOM_SELECTION);
+								}
+							else {
+								game.setBoard(new Card[4]);
+								game.nextTurn();
+							}
+						}
+					}
 				}
 			}
 		}
