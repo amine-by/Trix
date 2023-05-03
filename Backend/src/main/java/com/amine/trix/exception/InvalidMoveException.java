@@ -1,4 +1,4 @@
-package com.branper.trix.exception;
+package com.amine.trix.exception;
 
 public class InvalidMoveException extends Exception{
 	private static final long serialVersionUID = 1L;

@@ -1,4 +1,4 @@
-package com.branper.trix.model;
+package com.amine.trix.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

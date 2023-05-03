@@ -1,4 +1,4 @@
-package com.branper.trix;
+package com.amine.trix;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

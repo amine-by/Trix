@@ -1,8 +1,9 @@
-package com.branper.trix.storage;
+package com.amine.trix.storage;
 
 import java.util.HashMap;
 import java.util.Map;
-import com.branper.trix.model.Game;
+
+import com.amine.trix.model.Game;
 
 public class GameStorage {
 	private static Map<String, Game> games;

@@ -1,23 +1,23 @@
-package com.branper.trix.service;
+package com.amine.trix.service;
 
 import java.util.Arrays;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
-import com.branper.trix.exception.GameNotFoundException;
-import com.branper.trix.exception.InvalidGameException;
-import com.branper.trix.exception.InvalidMoveException;
-import com.branper.trix.exception.InvalidParamException;
-import com.branper.trix.model.Card;
-import com.branper.trix.model.Game;
-import com.branper.trix.model.GameStatus;
-import com.branper.trix.model.Kingdom;
-import com.branper.trix.model.GamePlay;
-import com.branper.trix.model.Player;
-import com.branper.trix.model.Rank;
-import com.branper.trix.model.Suit;
-import com.branper.trix.storage.GameStorage;
+import com.amine.trix.exception.GameNotFoundException;
+import com.amine.trix.exception.InvalidGameException;
+import com.amine.trix.exception.InvalidMoveException;
+import com.amine.trix.exception.InvalidParamException;
+import com.amine.trix.model.Card;
+import com.amine.trix.model.Game;
+import com.amine.trix.model.GamePlay;
+import com.amine.trix.model.GameStatus;
+import com.amine.trix.model.Kingdom;
+import com.amine.trix.model.Player;
+import com.amine.trix.model.Rank;
+import com.amine.trix.model.Suit;
+import com.amine.trix.storage.GameStorage;
 
 import lombok.AllArgsConstructor;
 
@@ -77,16 +77,16 @@ public class GameService {
 		if (!game.getStatus().equals(GameStatus.KINGDOM_SELECTION))
 			throw new InvalidGameException("Game is not in game selection phase");
 
-		Player player = game.getPlayers().get(game.getGameOwner());
+		Player gameOwner = game.getPlayers().get(game.getGameOwner());
 
-		if (player == null)
+		if (gameOwner == null)
 			throw new InvalidParamException("Player does not exist");
-		if (player.getLogin() != gamePlay.getGameId())
+		if (gameOwner.getLogin() != gamePlay.getGameId())
 			throw new InvalidMoveException("Player is not the game owner");
-		if (player.getAvailableGames().get(gamePlay.getMove()) == null)
+		if (gameOwner.getAvailableGames().get(gamePlay.getMove()) == null)
 			throw new InvalidParamException("Selected game is not available");
 
-		game.setCurrentKingdom(player.getAvailableGames().get(gamePlay.getMove()));
+		game.setCurrentKingdom(gameOwner.getAvailableGames().get(gamePlay.getMove()));
 
 		if (game.getCurrentKingdom() == Kingdom.TRIX) {
 			game.setBoard(new Boolean[32]);
@@ -95,7 +95,7 @@ public class GameService {
 		} else
 			game.setBoard(new Card[4]);
 
-		player.getAvailableGames().remove(gamePlay.getMove());
+		gameOwner.getAvailableGames().remove(gamePlay.getMove());
 		game.setStatus(GameStatus.ROUND_IN_PROGRESS);
 		return game;
 	}

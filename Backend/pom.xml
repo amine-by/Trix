@@ -8,7 +8,7 @@
 		<version>3.0.5</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.branper</groupId>
+	<groupId>com.amine</groupId>
 	<artifactId>trix</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>trix</name>

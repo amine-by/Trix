@@ -1,4 +1,4 @@
-package com.branper.trix.model;
+package com.amine.trix.model;
 
 import java.util.ArrayList;
 import java.util.Arrays;
