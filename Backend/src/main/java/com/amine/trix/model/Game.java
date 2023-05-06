@@ -56,8 +56,8 @@ public class Game {
 		for (Card card : playerHand) {
 			int cardRankValue = card.getRank().getTrixValue();
 			int cardSuitValue = card.getSuit().getValue();
-			if (cardRankValue == 4 || cardRankValue > 4 && (board[cardSuitValue * 8 + cardRankValue - 1] == "true")
-					|| cardRankValue < 4 && (board[cardSuitValue * 8 + cardRankValue + 1] == "true"))
+			if (cardRankValue == 4 || cardRankValue > 4 && (boolean) board[cardSuitValue * 8 + cardRankValue - 1]
+					|| cardRankValue < 4 && (boolean) board[cardSuitValue * 8 + cardRankValue + 1])
 				return;
 		}
 		nextTurn();
@@ -65,7 +65,7 @@ public class Game {
 	}
 
 	public void playTrixCard(int card) {
-		board[card] = "true";
+		board[card] = true;
 	}
 
 	public void playNormalCard(Card card, int position) {
