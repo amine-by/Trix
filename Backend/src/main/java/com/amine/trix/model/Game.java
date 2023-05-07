@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 
+import com.amine.trix.exception.InvalidParamException;
+
 import lombok.Data;
 
 @Data
@@ -12,7 +14,8 @@ public class Game {
 	private ArrayList<Player> players;
 	private int gameOwner;
 	private int turn;
-	private Object[] board;
+	private boolean[] trixBoard;
+	private ArrayList<Card> normalBoard;
 	private GameStatus status;
 	private Kingdom currentKingdom;
 
@@ -56,20 +59,20 @@ public class Game {
 		for (Card card : playerHand) {
 			int cardRankValue = card.getRank().getTrixValue();
 			int cardSuitValue = card.getSuit().getValue();
-			if (cardRankValue == 4 || cardRankValue > 4 && (boolean) board[cardSuitValue * 8 + cardRankValue - 1]
-					|| cardRankValue < 4 && (boolean) board[cardSuitValue * 8 + cardRankValue + 1])
+			if (cardRankValue == 4 || cardRankValue > 4 && (boolean) trixBoard[cardSuitValue * 8 + cardRankValue - 1]
+					|| cardRankValue < 4 && (boolean) trixBoard[cardSuitValue * 8 + cardRankValue + 1])
 				return;
 		}
 		nextTurn();
 		determineTrixTurn();
 	}
 
-	public void playTrixCard(int card) {
-		board[card] = true;
+	public void playTrixCard(int position) {
+		trixBoard[position] = true;
 	}
 
 	public void playNormalCard(Card card, int position) {
-		board[position] = card;
+		normalBoard.add(card);
 	}
 
 	public int remainingPlayersNumber() {
@@ -81,14 +84,14 @@ public class Game {
 	}
 
 	public boolean boardContainsSuit(Suit suit) {
-		for (Card card : (Card[]) board)
-			if (card != null && card.getSuit() == suit)
+		for (Card card : normalBoard)
+			if (card.getSuit() == suit)
 				return true;
 		return false;
 	}
 
 	public boolean boardContainsCard(Suit suit, Rank rank) {
-		for (Card card : (Card[]) board) {
+		for (Card card : normalBoard) {
 			if (card != null && card.getSuit() == suit && card.getRank() == rank)
 				return true;
 		}
@@ -103,28 +106,72 @@ public class Game {
 		return false;
 	}
 
-	public boolean isGameEnded() {
+	public void checkEndOfTurnGameEnd() {
 		for (Player player : players)
-			if (player.getAvailableGames().size() > 0)
-				return false;
-		return true;
+			if (player.getAvailableGames().size() > 0) {
+				status = GameStatus.FINISHED;
+				return;
+			}
+		distributeCards();
+		nextGameOwnerAndInitTurn();
+		status = GameStatus.KINGDOM_SELECTION;
 	}
 
 	public int highestPlayerOnBoard() {
 		int result = 0;
-		for (int i = 1; i < board.length; i++) {
-			Card[] normalBoard = (Card[]) board;
-			if (normalBoard[i].getSuit() == normalBoard[0].getSuit()
-					&& normalBoard[i].getRank().getNormalValue() > result)
-				result = normalBoard[i].getRank().getNormalValue();
+		for (int i = 1; i < normalBoard.size(); i++) {
+			if (normalBoard.get(i).getSuit() == normalBoard.get(0).getSuit()
+					&& normalBoard.get(i).getRank().getNormalValue() > result)
+				result = normalBoard.get(i).getRank().getNormalValue();
 		}
+		result = (result + gameOwner + 1) % 4;
 		return result;
 	}
-	
+
 	public int hasCapot() {
 		for (int i = 0; i < 4; i++)
-			if(players.get(i).getCollectedCards().size() == 32)
+			if (players.get(i).getCollectedCards().size() == 32)
 				return i;
 		return -1;
+	}
+
+	public void trixGameplay(String login, int move) throws InvalidParamException {
+		int cardRankValue = players.get(turn).getHand().get(move).getRank().getTrixValue();
+		int cardSuitValue = players.get(turn).getHand().get(move).getSuit().getValue();
+		Player player = players.get(turn);
+		if (cardRankValue == 4 || cardRankValue > 4 && trixBoard[cardSuitValue * 8 + cardRankValue - 1]
+				|| cardRankValue < 4 && trixBoard[cardSuitValue * 8 + cardRankValue + 1]) {
+
+			playTrixCard(cardSuitValue * 8 + cardRankValue);
+			player.getHand().remove(move);
+
+			if (player.getHand().size() == 0) {
+				int addedScore;
+				if (remainingPlayersNumber() == 3) {
+					addedScore = -100;
+					if (player.getLogin() == login)
+						addedScore *= 2;
+					player.setScore(addedScore);
+					if (player.getScore() % 1000 == 0)
+						player.setScore(0);
+					determineTrixTurn();
+				} else if (remainingPlayersNumber() == 2) {
+					addedScore = -50;
+					if (player.getLogin() == login)
+						addedScore *= 2;
+					player.setScore(player.getScore() + addedScore);
+					if (player.getScore() % 1000 == 0)
+						player.setScore(0);
+					checkEndOfTurnGameEnd();
+				}
+			} else {
+				if (cardRankValue != 7)
+					nextTurn();
+				determineTrixTurn();
+			}
+
+		} else {
+			throw new InvalidParamException("Selected card is not playable");
+		}
 	}
 }
