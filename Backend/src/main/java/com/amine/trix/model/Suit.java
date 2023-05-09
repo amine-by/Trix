@@ -7,5 +7,5 @@ import lombok.Getter;
 @Getter
 public enum Suit {
 	HEART(0), SPADE(1), CLUB(2), DIAMOND(3);
-	private int value;
+	private Integer value;
 }

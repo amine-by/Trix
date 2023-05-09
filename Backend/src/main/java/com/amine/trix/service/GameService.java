@@ -15,6 +15,7 @@ import com.amine.trix.model.Game;
 import com.amine.trix.payload.request.ConnectToGameRequest;
 import com.amine.trix.payload.request.CreateGameRequest;
 import com.amine.trix.payload.request.GameplayRequest;
+import com.amine.trix.payload.response.GameplayResponse;
 import com.amine.trix.model.GameStatus;
 import com.amine.trix.model.Kingdom;
 import com.amine.trix.model.Player;
@@ -28,25 +29,29 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class GameService {
 	// Creates a game and initializes the first player
-	public Game createGame(CreateGameRequest createGameRequest) {
+	public GameplayResponse createGame(CreateGameRequest createGameRequest) {
 		Game game = new Game();
 		game.setPlayers(new ArrayList<Player>());
+
+		String gameId = UUID.randomUUID().toString();
 
 		Player player = new Player();
 		// Initializes the first player score, hand, and available games (kingdoms)
 		player.initializePlayer(createGameRequest.getLogin());
-		game.setGameId(UUID.randomUUID().toString());
+		game.setGameId(gameId);
 		game.getPlayers().add(player);
 		game.setGameOwner(0);
 		game.setTurn(1);
 		game.setStatus(GameStatus.NEW);
 		GameStorage.getInstance().setGame(game);
-		return game;
+
+		GameplayResponse gameplayResponse = new GameplayResponse();
+		return gameplayResponse.populateResponse(gameId, 0);
 	}
 
 	// Connects a player to the game and initializes them
 	// Starts the game in case it finds the last player
-	public Game connectToGame(ConnectToGameRequest connectToGameRequest)
+	public GameplayResponse connectToGame(ConnectToGameRequest connectToGameRequest)
 			throws InvalidParamException, InvalidGameException {
 		if (!GameStorage.getInstance().getGames().containsKey(connectToGameRequest.getGameId()))
 			throw new InvalidParamException("Game does not exist");
@@ -68,12 +73,13 @@ public class GameService {
 			game.distributeCards();
 		}
 
-		GameStorage.getInstance().setGame(game);
-		return game;
+		GameplayResponse gameplayResponse = new GameplayResponse();
+		gameplayResponse.populateResponse(game.getGameId(), game.getPlayers().size() - 1);
+		return gameplayResponse.populateResponse(game.getGameId(), game.getPlayers().size() - 1);
 	}
 
 	// Enables the game owner to select a game (kingdom)
-	public Game gameSelect(GameplayRequest gameplayRequest)
+	public GameplayResponse gameSelect(GameplayRequest gameplayRequest)
 			throws GameNotFoundException, InvalidGameException, InvalidParamException, InvalidMoveException {
 
 		if (!GameStorage.getInstance().getGames().containsKey(gameplayRequest.getGameId()))
@@ -99,21 +105,26 @@ public class GameService {
 			game.setTrixBoard(new boolean[32]);
 			Arrays.fill(game.getTrixBoard(), false);
 			game.determineTrixTurn();
-		} else
+		} else {
+			if (game.getCurrentKingdom() != Kingdom.KING_OF_HEARTS)
+				game.initPlayersCollectedCards();
 			game.setNormalBoard(new ArrayList<Card>());
+		}
 
 		gameOwner.getAvailableGames().remove(gameplayRequest.getMove());
 		game.setStatus(GameStatus.ROUND_IN_PROGRESS);
-		return game;
+		GameplayResponse gameplayResponse = new GameplayResponse();
+		return gameplayResponse.populateResponse(game.getGameId(), game.getGameOwner());
 	}
 
-	public Game playCard(GameplayRequest gameplayRequest)
+	public GameplayResponse playCard(GameplayRequest gameplayRequest)
 			throws GameNotFoundException, InvalidGameException, InvalidParamException, InvalidMoveException {
 		if (!GameStorage.getInstance().getGames().containsKey(gameplayRequest.getGameId()))
 			throw new GameNotFoundException("Game does not exist");
 
 		Game game = GameStorage.getInstance().getGames().get(gameplayRequest.getGameId());
 
+		final int TURN = game.getTurn();
 		if (!game.getStatus().equals(GameStatus.ROUND_IN_PROGRESS))
 			throw new InvalidGameException("Game is not in game selection phase");
 
@@ -133,9 +144,8 @@ public class GameService {
 		if (game.getCurrentKingdom() == Kingdom.TRIX)
 			game.trixGameplay(gameplayRequest.getLogin(), gameplayRequest.getMove());
 		else {
-			if (game.getNormalBoard().size() != 0
-					&& !playedCard.getSuit().equals(game.getNormalBoard().get(0).getSuit())
-					&& player.suitNumberInHand(playedCard.getSuit()) > 0)
+			if (game.getNormalBoard().size() != 0 && playedCard.getSuit() != game.getNormalBoard().get(0).getSuit()
+					&& player.suitExistInHand(game.getNormalBoard().get(0).getSuit()))
 				throw new InvalidParamException("Selected card is not playable");
 
 			if (game.getCurrentKingdom() == Kingdom.KING_OF_HEARTS && playedCard.getRank() == Rank.KING
@@ -148,268 +158,19 @@ public class GameService {
 					&& playedCard.getSuit() == Suit.DIAMOND && game.collectedCardsContainsSuit(Suit.DIAMOND))
 				throw new InvalidParamException("Diamond cards are not playable yet");
 
-			game.playNormalCard(playedCard, game.getTurn());
-			game.nextTurn();
+			game.playNormalCard(playedCard, game.getTurn(), gameplayRequest.getMove());
 
 			if (game.getNormalBoard().size() == 4) {
-				final int RECIVING_PLAYER_INDEX = game.highestPlayerOnBoard();
-				int addedScore;
-				int collectedCardsFound;
-				if (game.getCurrentKingdom() == Kingdom.KING_OF_HEARTS) {
-					if (game.boardContainsCard(Suit.HEART, Rank.KING)) {
-						addedScore = RECIVING_PLAYER_INDEX == game.getGameOwner() ? 200 : 100;
-						game.getPlayers().get(RECIVING_PLAYER_INDEX)
-								.setScore(game.getPlayers().get(RECIVING_PLAYER_INDEX).getScore() + addedScore);
-						if (game.getPlayers().get(RECIVING_PLAYER_INDEX).getScore() % 1000 == 0)
-							game.getPlayers().get(RECIVING_PLAYER_INDEX).setScore(0);
-						game.checkEndOfTurnGameEnd();
-					} else {
-						game.setNormalBoard(new ArrayList<Card>());
-						game.nextTurn();
-					}
-				}
-
-				final int CAPOT = game.hasCapot();
-
-				if (game.getCurrentKingdom() == Kingdom.QUEENS) {
-					if (player.getHand().size() == 0) {
-						if (CAPOT != -1) {
-							addedScore = 160;
-							for (int i = 0; i < 4; i++) {
-								if (i != CAPOT) {
-									if (i == game.getGameOwner())
-										game.getPlayers().get(i)
-												.setScore(game.getPlayers().get(i).getScore() + addedScore * 2);
-									else
-										game.getPlayers().get(i)
-												.setScore(game.getPlayers().get(i).getScore() + addedScore);
-									if (game.getPlayers().get(i).getScore() % 1000 == 0)
-										game.getPlayers().get(i).setScore(0);
-								}
-							}
-						} else {
-							collectedCardsFound = 0;
-							for (int i = 0; i < 4; i++) {
-								addedScore = 0;
-								for (Card card : game.getPlayers().get(i).getCollectedCards()) {
-									if (card.getRank() == Rank.QUEEN) {
-										addedScore += 20;
-										collectedCardsFound++;
-										if (addedScore == 80)
-											addedScore *= 2;
-									}
-									if (collectedCardsFound == 4)
-										break;
-								}
-								if (addedScore > 0) {
-									if (i == game.getGameOwner())
-										addedScore *= 2;
-									game.getPlayers().get(i).setScore(game.getPlayers().get(i).getScore() + addedScore);
-									if (game.getPlayers().get(i).getScore() % 1000 == 0)
-										game.getPlayers().get(i).setScore(0);
-								}
-								if (collectedCardsFound == 4)
-									break;
-							}
-						}
-						game.checkEndOfTurnGameEnd();
-
-					} else {
-						collectedCardsFound = 0;
-						for (int i = 0; i < 4; i++) {
-							addedScore = 0;
-							for (Card card : game.getPlayers().get(i).getCollectedCards()) {
-								if (card.getRank() == Rank.QUEEN) {
-									addedScore += 20;
-									collectedCardsFound++;
-									if (addedScore == 80)
-										addedScore *= 2;
-								}
-								if (collectedCardsFound == 4)
-									break;
-							}
-							if (addedScore > 0) {
-								if (i == game.getGameOwner())
-									addedScore *= 2;
-								game.getPlayers().get(i).setScore(game.getPlayers().get(i).getScore() + addedScore);
-								if (game.getPlayers().get(i).getScore() % 1000 == 0)
-									game.getPlayers().get(i).setScore(0);
-							}
-							if (collectedCardsFound == 4)
-								break;
-						}
-						if (collectedCardsFound == 4)
-							game.checkEndOfTurnGameEnd();
-						else {
-							game.setNormalBoard(new ArrayList<Card>());
-							game.nextTurn();
-						}
-					}
-				}
-
-				if (game.getCurrentKingdom() == Kingdom.DIAMONDS) {
-					if (player.getHand().size() == 0) {
-						if (CAPOT != -1) {
-							addedScore = 80;
-							for (int i = 0; i < 4; i++) {
-								if (i != CAPOT) {
-									if (i == game.getGameOwner())
-										game.getPlayers().get(i)
-												.setScore(game.getPlayers().get(i).getScore() + addedScore * 2);
-									else
-										game.getPlayers().get(i)
-												.setScore(game.getPlayers().get(i).getScore() + addedScore);
-									if (game.getPlayers().get(i).getScore() % 1000 == 0)
-										game.getPlayers().get(i).setScore(0);
-								}
-							}
-
-						} else {
-							collectedCardsFound = 0;
-							for (int i = 0; i < 4; i++) {
-								addedScore = 0;
-								for (Card card : game.getPlayers().get(i).getCollectedCards()) {
-									if (card.getSuit() == Suit.DIAMOND) {
-										addedScore += 10;
-										collectedCardsFound++;
-									}
-									if (collectedCardsFound == 8)
-										break;
-								}
-								if (addedScore > 0) {
-									if (i == game.getGameOwner())
-										addedScore *= 2;
-									game.getPlayers().get(i).setScore(game.getPlayers().get(i).getScore() + addedScore);
-									if (game.getPlayers().get(i).getScore() % 1000 == 0)
-										game.getPlayers().get(i).setScore(0);
-								}
-								if (collectedCardsFound == 8)
-									break;
-							}
-						}
-						game.checkEndOfTurnGameEnd();
-					} else {
-						collectedCardsFound = 0;
-						for (int i = 0; i < 4; i++) {
-							addedScore = 0;
-							for (Card card : game.getPlayers().get(i).getCollectedCards()) {
-								if (card.getSuit() == Suit.DIAMOND) {
-									addedScore += 10;
-									collectedCardsFound++;
-								}
-								if (collectedCardsFound == 8)
-									break;
-							}
-							if (addedScore > 0) {
-								if (i == game.getGameOwner())
-									addedScore *= 2;
-								game.getPlayers().get(i).setScore(game.getPlayers().get(i).getScore() + addedScore);
-								if (game.getPlayers().get(i).getScore() % 1000 == 0)
-									game.getPlayers().get(i).setScore(0);
-							}
-							if (collectedCardsFound == 8)
-								break;
-						}
-						if (collectedCardsFound == 8)
-							game.checkEndOfTurnGameEnd();
-						else {
-							game.setNormalBoard(new ArrayList<Card>());
-							game.nextTurn();
-						}
-					}
-
-					if (game.getCurrentKingdom() == Kingdom.GENERAL) {
-						if (player.getHand().size() == 0) {
-							if (CAPOT != -1) {
-								addedScore = 260;
-								for (int i = 0; i < 4; i++) {
-									if (i != CAPOT) {
-										if (i == game.getGameOwner())
-											game.getPlayers().get(i)
-													.setScore(game.getPlayers().get(i).getScore() + addedScore * 2);
-										else
-											game.getPlayers().get(i)
-													.setScore(game.getPlayers().get(i).getScore() + addedScore);
-										if (game.getPlayers().get(i).getScore() % 1000 == 0)
-											game.getPlayers().get(i).setScore(0);
-									}
-								}
-							} else {
-								collectedCardsFound = 0;
-								for (int i = 0; i < 4; i++) {
-									addedScore = 0;
-									for (Card card : game.getPlayers().get(i).getCollectedCards()) {
-										if (card.getSuit() == Suit.DIAMOND) {
-											addedScore += 10;
-											collectedCardsFound++;
-										}
-										if (card.getRank() == Rank.QUEEN) {
-											addedScore += 20;
-											collectedCardsFound++;
-										}
-										if (card.getRank() == Rank.KING && card.getSuit() == Suit.HEART) {
-											addedScore += 100;
-											collectedCardsFound++;
-										}
-										if (collectedCardsFound == 13)
-											break;
-									}
-									if (addedScore > 0) {
-										if (i == game.getGameOwner())
-											addedScore *= 2;
-										game.getPlayers().get(i)
-												.setScore(game.getPlayers().get(i).getScore() + addedScore);
-										if (game.getPlayers().get(i).getScore() % 1000 == 0)
-											game.getPlayers().get(i).setScore(0);
-									}
-									if (collectedCardsFound == 13)
-										break;
-								}
-							}
-							game.checkEndOfTurnGameEnd();
-
-						} else {
-							collectedCardsFound = 0;
-							for (int i = 0; i < 4; i++) {
-								addedScore = 0;
-								for (Card card : game.getPlayers().get(i).getCollectedCards()) {
-									if (card.getSuit() == Suit.DIAMOND) {
-										addedScore += 10;
-										collectedCardsFound++;
-									}
-									if (card.getRank() == Rank.QUEEN) {
-										addedScore += 20;
-										collectedCardsFound++;
-									}
-									if (card.getRank() == Rank.KING && card.getSuit() == Suit.HEART) {
-										addedScore += 100;
-										collectedCardsFound++;
-									}
-									if (collectedCardsFound == 13)
-										break;
-								}
-								if (addedScore > 0) {
-									if (i == game.getGameOwner())
-										addedScore *= 2;
-									game.getPlayers().get(i).setScore(game.getPlayers().get(i).getScore() + addedScore);
-									if (game.getPlayers().get(i).getScore() % 1000 == 0)
-										game.getPlayers().get(i).setScore(0);
-								}
-								if (collectedCardsFound == 13)
-									break;
-							}
-							if (collectedCardsFound == 13)
-								game.checkEndOfTurnGameEnd();
-							else {
-								game.setNormalBoard(new ArrayList<Card>());
-								game.nextTurn();
-							}
-						}
-					}
-				}
-			}
+				if (game.getCurrentKingdom() == Kingdom.KING_OF_HEARTS)
+					game.endOfTurnKingOfHeartGameplay();
+				else
+					game.endOfTurnGameplay();
+			} else
+				game.nextTurn();
 		}
 
-		return game;
+		GameplayResponse gameplayResponse = new GameplayResponse();
+
+		return gameplayResponse.populateResponse(game.getGameId(), TURN);
 	}
 }

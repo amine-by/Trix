@@ -28,6 +28,13 @@ public class Player {
 		return false;
 	}
 
+	public boolean suitExistInHand(Suit suit) {
+		for (Card card : hand)
+			if (card.getSuit() == suit)
+				return true;
+		return false;
+	}
+
 	public int suitNumberInHand(Suit suit) {
 		int result = 0;
 		for (Card card : hand)
@@ -35,4 +42,6 @@ public class Player {
 				result++;
 		return result;
 	}
+	
+	
 }
