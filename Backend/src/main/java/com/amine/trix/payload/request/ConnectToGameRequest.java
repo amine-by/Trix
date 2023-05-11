@@ -8,6 +8,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ConnectToGameRequest {
-	private String login;
+	private String playerId;
 	private String gameId;
 }

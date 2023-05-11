@@ -8,8 +8,6 @@ import com.amine.trix.model.GameStatus;
 import com.amine.trix.model.Kingdom;
 import com.amine.trix.model.Player;
 import com.amine.trix.model.PlayerStatus;
-import com.amine.trix.storage.GameStorage;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,15 +26,14 @@ public class GameplayResponse {
 	private Player player;
 	private ArrayList<PlayerStatus> otherPlayers;
 
-	public GameplayResponse populateResponse(String gameId, int playerIndex) {
-		ArrayList<PlayerStatus> otherPlayers = new ArrayList<PlayerStatus>();
-		Game game = GameStorage.getInstance().getGames().get(gameId);
+	public void populateResponse(Game game, int playerIndex) {
+		otherPlayers = new ArrayList<PlayerStatus>();
 		ArrayList<Player> players = game.getPlayers();
 		for (int i = 0; i < players.size(); i++) {
-			Player player = players.get(i);
+			Player player = players.get((i + playerIndex) % players.size());
 			if (i != playerIndex) {
 				PlayerStatus playerStatus = new PlayerStatus();
-				playerStatus.setLogin(player.getLogin());
+				playerStatus.setLogin(player.getId());
 				playerStatus.setScore(player.getScore());
 				playerStatus.setHand((player.getHand() == null) ? 0 : player.getHand().size());
 				playerStatus.setCollectedCards(
@@ -45,8 +42,13 @@ public class GameplayResponse {
 			}
 		}
 
-		return new GameplayResponse(game.getGameId(), game.getGameOwner(), game.getTurn(), game.getStatus(),
-				game.getCurrentKingdom(), game.getTrixBoard(), game.getNormalBoard(),
-				game.getPlayers().get(playerIndex), otherPlayers);
+		gameId = game.getId();
+		gameOwner = game.getGameOwner();
+		turn = game.getTurn();
+		status = game.getStatus();
+		currentKingdom = game.getCurrentKingdom();
+		trixBoard = game.getTrixBoard();
+		normalBoard = game.getNormalBoard();
+		player = game.getPlayers().get(playerIndex);
 	}
 }

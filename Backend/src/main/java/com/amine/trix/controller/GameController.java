@@ -1,7 +1,6 @@
 package com.amine.trix.controller;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,7 +25,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/game")
 public class GameController {
 	private final GameService gameService;
-	private final SimpMessagingTemplate simpMessagingTemplate;
 
 	@PostMapping("/create")
 	public ResponseEntity<GameplayResponse> createGame(@RequestBody CreateGameRequest createGameRequest) {
@@ -52,8 +50,6 @@ public class GameController {
 	public ResponseEntity<GameplayResponse> playCard(@RequestBody GameplayRequest gameplayRequest)
 			throws InvalidParamException, InvalidGameException, GameNotFoundException, InvalidMoveException {
 		log.info("play a card request {}", gameplayRequest);
-		GameplayResponse gameplayResponse = gameService.playCard(gameplayRequest);
-		simpMessagingTemplate.convertAndSend("/topic/progress", gameplayResponse);
-		return ResponseEntity.ok(gameplayResponse);
+		return ResponseEntity.ok(gameService.playCard(gameplayRequest));
 	}
 }

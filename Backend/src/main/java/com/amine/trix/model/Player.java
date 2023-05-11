@@ -7,14 +7,14 @@ import lombok.Data;
 
 @Data
 public class Player {
-	private String login;
+	private String id;
 	private int score;
 	private ArrayList<Card> hand;
 	private ArrayList<Card> collectedCards;
 	private ArrayList<Kingdom> availableGames;
 
 	public void initializePlayer(String login) {
-		this.login = login;
+		this.id = login;
 		this.score = 0;
 		this.availableGames = new ArrayList<Kingdom>(
 				Arrays.asList(Kingdom.KING_OF_HEARTS, Kingdom.QUEENS, Kingdom.DIAMONDS, Kingdom.GENERAL, Kingdom.TRIX));

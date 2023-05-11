@@ -4,13 +4,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import com.amine.trix.exception.InvalidParamException;
 
 import lombok.Data;
 
 @Data
+@Document("games")
 public class Game {
-	private String gameId;
+	@Id
+	private String id;
 	private ArrayList<Player> players;
 	private int gameOwner;
 	private int turn;
@@ -173,7 +178,7 @@ public class Game {
 				int addedScore;
 				if (remainingPlayersNumber() == 3) {
 					addedScore = -100;
-					if (player.getLogin() == login)
+					if (player.getId() == login)
 						addedScore *= 2;
 					player.setScore(addedScore);
 					if (player.getScore() % 1000 == 0)
@@ -181,7 +186,7 @@ public class Game {
 					determineTrixTurn();
 				} else if (remainingPlayersNumber() == 2) {
 					addedScore = -50;
-					if (player.getLogin() == login)
+					if (player.getId() == login)
 						addedScore *= 2;
 					player.setScore(player.getScore() + addedScore);
 					if (player.getScore() % 1000 == 0)
@@ -214,14 +219,14 @@ public class Game {
 	}
 
 	public void endOfTurnGameplay() {
-		final int CAPOT = hasCapot();
 		final int RECIVING_PLAYER_INDEX = highestPlayerOnBoard();
-		int collectedCardsFound;
-		int addedScore;
 		Player player = players.get(turn);
 		Player currentPlayer;
 		players.get(RECIVING_PLAYER_INDEX).getCollectedCards().addAll(normalBoard);
 		normalBoard = new ArrayList<Card>();
+		final int CAPOT = hasCapot();
+		int collectedCardsFound;
+		int addedScore;
 		if (player.getHand().size() == 0) {
 			if (CAPOT != -1) {
 				switch (currentKingdom) {
@@ -358,5 +363,5 @@ public class Game {
 		} else
 			turn = RECIVING_PLAYER_INDEX;
 	}
-	
+
 }

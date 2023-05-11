@@ -9,6 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class GameplayRequest {
 	private int move;
-	private String login;
+	private String playerId;
 	private String gameId;
 }

@@ -2,8 +2,9 @@ package com.amine.trix.service;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import com.amine.trix.exception.GameNotFoundException;
@@ -16,54 +17,54 @@ import com.amine.trix.payload.request.ConnectToGameRequest;
 import com.amine.trix.payload.request.CreateGameRequest;
 import com.amine.trix.payload.request.GameplayRequest;
 import com.amine.trix.payload.response.GameplayResponse;
+import com.amine.trix.repository.GameRepository;
 import com.amine.trix.model.GameStatus;
 import com.amine.trix.model.Kingdom;
 import com.amine.trix.model.Player;
 import com.amine.trix.model.Rank;
 import com.amine.trix.model.Suit;
-import com.amine.trix.storage.GameStorage;
-
-import lombok.AllArgsConstructor;
 
 @Service
-@AllArgsConstructor
 public class GameService {
+
+	@Autowired
+	private GameRepository gameRepository;
+	private SimpMessagingTemplate simpMessagingTemplate;
+
 	// Creates a game and initializes the first player
 	public GameplayResponse createGame(CreateGameRequest createGameRequest) {
 		Game game = new Game();
 		game.setPlayers(new ArrayList<Player>());
 
-		String gameId = UUID.randomUUID().toString();
-
 		Player player = new Player();
 		// Initializes the first player score, hand, and available games (kingdoms)
-		player.initializePlayer(createGameRequest.getLogin());
-		game.setGameId(gameId);
+		player.initializePlayer(createGameRequest.getPlayerId());
 		game.getPlayers().add(player);
 		game.setGameOwner(0);
 		game.setTurn(1);
 		game.setStatus(GameStatus.NEW);
-		GameStorage.getInstance().setGame(game);
+
+		gameRepository.save(game);
 
 		GameplayResponse gameplayResponse = new GameplayResponse();
-		return gameplayResponse.populateResponse(gameId, 0);
+		gameplayResponse.populateResponse(game, 0);
+		return gameplayResponse;
 	}
 
 	// Connects a player to the game and initializes them
 	// Starts the game in case it finds the last player
 	public GameplayResponse connectToGame(ConnectToGameRequest connectToGameRequest)
 			throws InvalidParamException, InvalidGameException {
-		if (!GameStorage.getInstance().getGames().containsKey(connectToGameRequest.getGameId()))
-			throw new InvalidParamException("Game does not exist");
 
-		Game game = GameStorage.getInstance().getGames().get(connectToGameRequest.getGameId());
+		Game game = gameRepository.findById(connectToGameRequest.getGameId())
+				.orElseThrow(() -> new InvalidParamException("Game does not exist"));
 
 		if (game.getPlayers().size() == 4)
 			throw new InvalidGameException("Game is full");
 
 		Player player = new Player();
 		// Initializes another player score, hand, and available games (kingdoms)
-		player.initializePlayer(connectToGameRequest.getLogin());
+		player.initializePlayer(connectToGameRequest.getPlayerId());
 		game.getPlayers().add(player);
 
 		// Starts the game in case it finds the last player and distributes cards to
@@ -73,19 +74,19 @@ public class GameService {
 			game.distributeCards();
 		}
 
+		gameRepository.save(game);
+
 		GameplayResponse gameplayResponse = new GameplayResponse();
-		gameplayResponse.populateResponse(game.getGameId(), game.getPlayers().size() - 1);
-		return gameplayResponse.populateResponse(game.getGameId(), game.getPlayers().size() - 1);
+		gameplayResponse.populateResponse(game, game.getPlayers().size() - 1);
+		return gameplayResponse;
 	}
 
 	// Enables the game owner to select a game (kingdom)
 	public GameplayResponse gameSelect(GameplayRequest gameplayRequest)
 			throws GameNotFoundException, InvalidGameException, InvalidParamException, InvalidMoveException {
 
-		if (!GameStorage.getInstance().getGames().containsKey(gameplayRequest.getGameId()))
-			throw new GameNotFoundException("Game does not exist");
-
-		Game game = GameStorage.getInstance().getGames().get(gameplayRequest.getGameId());
+		Game game = gameRepository.findById(gameplayRequest.getGameId())
+				.orElseThrow(() -> new InvalidParamException("Game does not exist"));
 
 		if (!game.getStatus().equals(GameStatus.KINGDOM_SELECTION))
 			throw new InvalidGameException("Game is not in game selection phase");
@@ -94,7 +95,7 @@ public class GameService {
 
 		if (gameOwner == null)
 			throw new InvalidParamException("Player does not exist");
-		if (!gameOwner.getLogin().equals(gameplayRequest.getLogin()))
+		if (!gameOwner.getId().equals(gameplayRequest.getPlayerId()))
 			throw new InvalidMoveException("Player is not the game owner");
 		if (gameOwner.getAvailableGames().get(gameplayRequest.getMove()) == null)
 			throw new InvalidParamException("Selected game is not available");
@@ -113,16 +114,18 @@ public class GameService {
 
 		gameOwner.getAvailableGames().remove(gameplayRequest.getMove());
 		game.setStatus(GameStatus.ROUND_IN_PROGRESS);
+
+		gameRepository.save(game);
+
 		GameplayResponse gameplayResponse = new GameplayResponse();
-		return gameplayResponse.populateResponse(game.getGameId(), game.getGameOwner());
+		gameplayResponse.populateResponse(game, game.getGameOwner());
+		return gameplayResponse;
 	}
 
 	public GameplayResponse playCard(GameplayRequest gameplayRequest)
 			throws GameNotFoundException, InvalidGameException, InvalidParamException, InvalidMoveException {
-		if (!GameStorage.getInstance().getGames().containsKey(gameplayRequest.getGameId()))
-			throw new GameNotFoundException("Game does not exist");
-
-		Game game = GameStorage.getInstance().getGames().get(gameplayRequest.getGameId());
+		Game game = gameRepository.findById(gameplayRequest.getGameId())
+				.orElseThrow(() -> new InvalidParamException("Game does not exist"));
 
 		final int TURN = game.getTurn();
 		if (!game.getStatus().equals(GameStatus.ROUND_IN_PROGRESS))
@@ -133,7 +136,7 @@ public class GameService {
 		if (player == null)
 			throw new InvalidParamException("Player does not exist");
 
-		if (!player.getLogin().equals(gameplayRequest.getLogin()))
+		if (!player.getId().equals(gameplayRequest.getPlayerId()))
 			throw new InvalidMoveException("Player is not on his turn");
 
 		Card playedCard = player.getHand().get(gameplayRequest.getMove());
@@ -142,7 +145,7 @@ public class GameService {
 			throw new InvalidParamException("Selected card is not available");
 
 		if (game.getCurrentKingdom() == Kingdom.TRIX)
-			game.trixGameplay(gameplayRequest.getLogin(), gameplayRequest.getMove());
+			game.trixGameplay(gameplayRequest.getPlayerId(), gameplayRequest.getMove());
 		else {
 			if (game.getNormalBoard().size() != 0 && playedCard.getSuit() != game.getNormalBoard().get(0).getSuit()
 					&& player.suitExistInHand(game.getNormalBoard().get(0).getSuit()))
@@ -169,8 +172,12 @@ public class GameService {
 				game.nextTurn();
 		}
 
-		GameplayResponse gameplayResponse = new GameplayResponse();
+		gameRepository.save(game);
 
-		return gameplayResponse.populateResponse(game.getGameId(), TURN);
+		simpMessagingTemplate.convertAndSend("/play/topic/progress", game);
+
+		GameplayResponse gameplayResponse = new GameplayResponse();
+		gameplayResponse.populateResponse(game, TURN);
+		return gameplayResponse;
 	}
 }

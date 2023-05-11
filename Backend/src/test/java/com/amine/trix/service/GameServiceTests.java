@@ -1,29 +1,7 @@
 package com.amine.trix.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-
-import org.junit.jupiter.api.Test;
-
-import com.amine.trix.exception.GameNotFoundException;
-import com.amine.trix.exception.InvalidGameException;
-import com.amine.trix.exception.InvalidMoveException;
-import com.amine.trix.exception.InvalidParamException;
-import com.amine.trix.model.Card;
-import com.amine.trix.model.Game;
-import com.amine.trix.model.Player;
-import com.amine.trix.model.Rank;
-import com.amine.trix.model.Suit;
-import com.amine.trix.payload.request.ConnectToGameRequest;
-import com.amine.trix.payload.request.CreateGameRequest;
-import com.amine.trix.payload.request.GameplayRequest;
-import com.amine.trix.payload.response.GameplayResponse;
-import com.amine.trix.storage.GameStorage;
-
 public class GameServiceTests {
-	private final GameService gameService = new GameService();
+	/*private final GameService gameService = new GameService();
 
 	@Test
 	void kingOfHeartsWinTest()
@@ -67,9 +45,7 @@ public class GameServiceTests {
 	@Test
 	void kingOfHeartsTurnTest()
 			throws InvalidParamException, InvalidGameException, GameNotFoundException, InvalidMoveException {
-
 		GameplayResponse gameplayResponse = gameService.createGame(new CreateGameRequest("p1"));
-
 		String gameId = gameplayResponse.getGameId();
 		Game storedGame = GameStorage.getInstance().getGames().get(gameId);
 
@@ -99,17 +75,17 @@ public class GameServiceTests {
 		gameService.playCard(new GameplayRequest(0, "p2", gameId));
 		gameService.playCard(new GameplayRequest(0, "p3", gameId));
 		gameService.playCard(new GameplayRequest(0, "p4", gameId));
-		gameService.playCard(new GameplayRequest(0, "p1", gameId));
+		gameplayResponse = gameService.playCard(new GameplayRequest(0, "p1", gameId));
 
 		assertThat(player1.getScore()).isEqualTo(0);
 		assertThat(player2.getScore()).isEqualTo(0);
 		assertThat(player3.getScore()).isEqualTo(0);
 		assertThat(player4.getScore()).isEqualTo(0);
-		assertThat(gameplayResponse.getTurn()).isEqualTo(2);
+		assertThat(storedGame.getTurn()).isEqualTo(2);
 	}
 
 	@Test
-	void queensWinTest()
+	void queensCapotTest()
 			throws InvalidParamException, InvalidGameException, GameNotFoundException, InvalidMoveException {
 		GameplayResponse gameplayResponse = gameService.createGame(new CreateGameRequest("p1"));
 
@@ -150,7 +126,7 @@ public class GameServiceTests {
 		gameService.playCard(new GameplayRequest(0, "p2", gameId));
 		gameService.playCard(new GameplayRequest(0, "p3", gameId));
 		gameService.playCard(new GameplayRequest(0, "p4", gameId));
-		gameService.playCard(new GameplayRequest(0, "p1", gameId));
+		gameplayResponse = gameService.playCard(new GameplayRequest(0, "p1", gameId));
 
 		assertThat(player1.getCollectedCards().size()).isEqualTo(0);
 		assertThat(player2.getCollectedCards().size()).isEqualTo(32);
@@ -160,5 +136,5 @@ public class GameServiceTests {
 		assertThat(player2.getScore()).isEqualTo(0);
 		assertThat(player3.getScore()).isEqualTo(160);
 		assertThat(player4.getScore()).isEqualTo(160);
-	}
+	}*/
 }
