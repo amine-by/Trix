@@ -3,7 +3,6 @@ package com.amine.trix.service;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +17,9 @@ import com.amine.trix.payload.request.CreateGameRequest;
 import com.amine.trix.payload.request.GameplayRequest;
 import com.amine.trix.payload.response.GameplayResponse;
 import com.amine.trix.repository.GameRepository;
+
+import lombok.AllArgsConstructor;
+
 import com.amine.trix.model.GameStatus;
 import com.amine.trix.model.Kingdom;
 import com.amine.trix.model.Player;
@@ -25,11 +27,11 @@ import com.amine.trix.model.Rank;
 import com.amine.trix.model.Suit;
 
 @Service
+@AllArgsConstructor
 public class GameService {
 
-	@Autowired
-	private GameRepository gameRepository;
-	private SimpMessagingTemplate simpMessagingTemplate;
+	private final GameRepository gameRepository;
+	private final SimpMessagingTemplate simpMessagingTemplate;
 
 	// Creates a game and initializes the first player
 	public GameplayResponse createGame(CreateGameRequest createGameRequest) {

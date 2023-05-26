@@ -5,14 +5,3 @@ spring:
     mongodb:
       uri: ${MONGO_URI}
       database: ${MONGO_DB}
-  security:
-    oauth2:
-      client:
-        registration:
-          facebook:
-            client-id: ${FB_CLIENT_ID}
-            client-secret: ${FB_CLIENT_SECRET}
-            scope:
-            - email
-            - public_profile
-          
