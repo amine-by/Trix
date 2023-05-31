@@ -1,4 +1,4 @@
-package com.amine.trix.payload.request;
+package com.amine.trix.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,6 +7,6 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class CreateGameRequest {
+public class CreateGameDto {
 	private String playerId;
 }

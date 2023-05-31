@@ -6,16 +6,16 @@ import java.util.Arrays;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import com.amine.trix.dto.ConnectToGameDto;
+import com.amine.trix.dto.CreateGameDto;
+import com.amine.trix.dto.GameplayDto;
+import com.amine.trix.dto.MoveDto;
 import com.amine.trix.exception.GameNotFoundException;
 import com.amine.trix.exception.InvalidGameException;
 import com.amine.trix.exception.InvalidMoveException;
 import com.amine.trix.exception.InvalidParamException;
 import com.amine.trix.model.Card;
 import com.amine.trix.model.Game;
-import com.amine.trix.payload.request.ConnectToGameRequest;
-import com.amine.trix.payload.request.CreateGameRequest;
-import com.amine.trix.payload.request.GameplayRequest;
-import com.amine.trix.payload.response.GameplayResponse;
 import com.amine.trix.repository.GameRepository;
 
 import lombok.AllArgsConstructor;
@@ -34,7 +34,7 @@ public class GameService {
 	private final SimpMessagingTemplate simpMessagingTemplate;
 
 	// Creates a game and initializes the first player
-	public GameplayResponse createGame(CreateGameRequest createGameRequest) {
+	public GameplayDto createGame(CreateGameDto createGameRequest) {
 		Game game = new Game();
 		game.setPlayers(new ArrayList<Player>());
 
@@ -48,14 +48,14 @@ public class GameService {
 
 		gameRepository.save(game);
 
-		GameplayResponse gameplayResponse = new GameplayResponse();
+		GameplayDto gameplayResponse = new GameplayDto();
 		gameplayResponse.populateResponse(game, 0);
 		return gameplayResponse;
 	}
 
 	// Connects a player to the game and initializes them
 	// Starts the game in case it finds the last player
-	public GameplayResponse connectToGame(ConnectToGameRequest connectToGameRequest)
+	public GameplayDto connectToGame(ConnectToGameDto connectToGameRequest)
 			throws InvalidParamException, InvalidGameException {
 
 		Game game = gameRepository.findById(connectToGameRequest.getGameId())
@@ -78,16 +78,16 @@ public class GameService {
 
 		gameRepository.save(game);
 
-		GameplayResponse gameplayResponse = new GameplayResponse();
+		GameplayDto gameplayResponse = new GameplayDto();
 		gameplayResponse.populateResponse(game, game.getPlayers().size() - 1);
 		return gameplayResponse;
 	}
 
 	// Enables the game owner to select a game (kingdom)
-	public GameplayResponse gameSelect(GameplayRequest gameplayRequest)
+	public GameplayDto gameSelect(MoveDto moveDto)
 			throws GameNotFoundException, InvalidGameException, InvalidParamException, InvalidMoveException {
 
-		Game game = gameRepository.findById(gameplayRequest.getGameId())
+		Game game = gameRepository.findById(moveDto.getGameId())
 				.orElseThrow(() -> new InvalidParamException("Game does not exist"));
 
 		if (!game.getStatus().equals(GameStatus.KINGDOM_SELECTION))
@@ -97,12 +97,12 @@ public class GameService {
 
 		if (gameOwner == null)
 			throw new InvalidParamException("Player does not exist");
-		if (!gameOwner.getId().equals(gameplayRequest.getPlayerId()))
+		if (!gameOwner.getId().equals(moveDto.getPlayerId()))
 			throw new InvalidMoveException("Player is not the game owner");
-		if (gameOwner.getAvailableGames().get(gameplayRequest.getMove()) == null)
+		if (gameOwner.getAvailableGames().get(moveDto.getMove()) == null)
 			throw new InvalidParamException("Selected game is not available");
 
-		game.setCurrentKingdom(gameOwner.getAvailableGames().get(gameplayRequest.getMove()));
+		game.setCurrentKingdom(gameOwner.getAvailableGames().get(moveDto.getMove()));
 
 		if (game.getCurrentKingdom() == Kingdom.TRIX) {
 			game.setTrixBoard(new boolean[32]);
@@ -114,19 +114,19 @@ public class GameService {
 			game.setNormalBoard(new ArrayList<Card>());
 		}
 
-		gameOwner.getAvailableGames().remove(gameplayRequest.getMove());
+		gameOwner.getAvailableGames().remove(moveDto.getMove());
 		game.setStatus(GameStatus.ROUND_IN_PROGRESS);
 
 		gameRepository.save(game);
 
-		GameplayResponse gameplayResponse = new GameplayResponse();
+		GameplayDto gameplayResponse = new GameplayDto();
 		gameplayResponse.populateResponse(game, game.getGameOwner());
 		return gameplayResponse;
 	}
 
-	public GameplayResponse playCard(GameplayRequest gameplayRequest)
+	public GameplayDto playCard(MoveDto moveDto)
 			throws GameNotFoundException, InvalidGameException, InvalidParamException, InvalidMoveException {
-		Game game = gameRepository.findById(gameplayRequest.getGameId())
+		Game game = gameRepository.findById(moveDto.getGameId())
 				.orElseThrow(() -> new InvalidParamException("Game does not exist"));
 
 		final int TURN = game.getTurn();
@@ -138,16 +138,16 @@ public class GameService {
 		if (player == null)
 			throw new InvalidParamException("Player does not exist");
 
-		if (!player.getId().equals(gameplayRequest.getPlayerId()))
+		if (!player.getId().equals(moveDto.getPlayerId()))
 			throw new InvalidMoveException("Player is not on his turn");
 
-		Card playedCard = player.getHand().get(gameplayRequest.getMove());
+		Card playedCard = player.getHand().get(moveDto.getMove());
 
 		if (playedCard == null)
 			throw new InvalidParamException("Selected card is not available");
 
 		if (game.getCurrentKingdom() == Kingdom.TRIX)
-			game.trixGameplay(gameplayRequest.getPlayerId(), gameplayRequest.getMove());
+			game.trixGameplay(moveDto.getPlayerId(), moveDto.getMove());
 		else {
 			if (game.getNormalBoard().size() != 0 && playedCard.getSuit() != game.getNormalBoard().get(0).getSuit()
 					&& player.suitExistInHand(game.getNormalBoard().get(0).getSuit()))
@@ -163,7 +163,7 @@ public class GameService {
 					&& playedCard.getSuit() == Suit.DIAMOND && game.collectedCardsContainsSuit(Suit.DIAMOND))
 				throw new InvalidParamException("Diamond cards are not playable yet");
 
-			game.playNormalCard(playedCard, game.getTurn(), gameplayRequest.getMove());
+			game.playNormalCard(playedCard, game.getTurn(), moveDto.getMove());
 
 			if (game.getNormalBoard().size() == 4) {
 				if (game.getCurrentKingdom() == Kingdom.KING_OF_HEARTS)
@@ -178,7 +178,7 @@ public class GameService {
 
 		simpMessagingTemplate.convertAndSend("/play/topic/progress", game);
 
-		GameplayResponse gameplayResponse = new GameplayResponse();
+		GameplayDto gameplayResponse = new GameplayDto();
 		gameplayResponse.populateResponse(game, TURN);
 		return gameplayResponse;
 	}

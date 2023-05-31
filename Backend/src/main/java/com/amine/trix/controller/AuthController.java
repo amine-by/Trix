@@ -10,13 +10,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.amine.trix.payload.request.TokenRequest;
+import com.amine.trix.dto.TokenDto;
 
 @RestController
 @RequestMapping("/api/oauth")	
 public class AuthController {
 	@PostMapping("/facebook")
-	public ResponseEntity<Object> facebook(@RequestBody TokenRequest tokenRequest){
+	public ResponseEntity<Object> facebook(@RequestBody TokenDto tokenRequest){
 		Facebook facebook = new FacebookTemplate(tokenRequest.getValue());
 		User user = facebook.fetchObject("me", User.class);
 		return new ResponseEntity<Object>(user, HttpStatus.OK);

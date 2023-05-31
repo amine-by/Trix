@@ -1,4 +1,4 @@
-package com.amine.trix.payload.response;
+package com.amine.trix.dto;
 
 import java.util.ArrayList;
 
@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class GameplayResponse {
+public class GameplayDto {
 	private String gameId;
 	private int gameOwner;
 	private int turn;
