@@ -27,16 +27,16 @@ public class GameController {
 	private final GameService gameService;
 
 	@PostMapping("/create")
-	public ResponseEntity<GameplayDto> createGame(@RequestBody CreateGameDto createGameRequest) {
-		log.info("create game request {}", createGameRequest);
-		return ResponseEntity.ok(gameService.createGame(createGameRequest));
+	public ResponseEntity<GameplayDto> createGame(@RequestBody CreateGameDto createGameDto) {
+		log.info("create game request {}", createGameDto);
+		return ResponseEntity.ok(gameService.createGame(createGameDto));
 	}
 
 	@PostMapping("/connect")
-	public ResponseEntity<GameplayDto> connectToGame(@RequestBody ConnectToGameDto connectToGameRequest)
+	public ResponseEntity<GameplayDto> connectToGame(@RequestBody ConnectToGameDto connectToGameDto)
 			throws InvalidParamException, InvalidGameException {
-		log.info("connect to game request {}", connectToGameRequest);
-		return ResponseEntity.ok(gameService.connectToGame(connectToGameRequest));
+		log.info("connect to game request {}", connectToGameDto);
+		return ResponseEntity.ok(gameService.connectToGame(connectToGameDto));
 	}
 
 	@PostMapping("/select")

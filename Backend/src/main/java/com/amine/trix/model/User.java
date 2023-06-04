@@ -14,9 +14,7 @@ public class User {
 	@Id
 	private String id;
 	@Indexed(unique = true)
-	private String facebookId;
-	@Indexed(unique = true)
-	private String email;
+	private String appId;
 	private String name;
 	private HashSet<Role> roles;
 }

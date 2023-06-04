@@ -176,7 +176,7 @@ public class GameService {
 
 		gameRepository.save(game);
 
-		simpMessagingTemplate.convertAndSend("/play/topic/progress", game);
+		simpMessagingTemplate.convertAndSend("/api/play/topic/progress", game);
 
 		GameplayDto gameplayResponse = new GameplayDto();
 		gameplayResponse.populateResponse(game, TURN);

@@ -1,7 +1,6 @@
 package com.amine.trix.config;
 
 import java.util.Collection;
-import java.util.Optional;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
