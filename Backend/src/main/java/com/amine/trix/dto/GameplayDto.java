@@ -2,10 +2,10 @@ package com.amine.trix.dto;
 
 import java.util.ArrayList;
 
+import com.amine.trix.enums.GameStatus;
+import com.amine.trix.enums.Kingdom;
 import com.amine.trix.model.Card;
 import com.amine.trix.model.Game;
-import com.amine.trix.model.GameStatus;
-import com.amine.trix.model.Kingdom;
 import com.amine.trix.model.Player;
 import com.amine.trix.model.PlayerStatus;
 import lombok.AllArgsConstructor;
@@ -33,7 +33,7 @@ public class GameplayDto {
 			Player player = players.get((i + playerIndex) % players.size());
 			if (i != playerIndex) {
 				PlayerStatus playerStatus = new PlayerStatus();
-				playerStatus.setLogin(player.getId());
+				playerStatus.setId(player.getId());
 				playerStatus.setScore(player.getScore());
 				playerStatus.setHand((player.getHand() == null) ? 0 : player.getHand().size());
 				playerStatus.setCollectedCards(

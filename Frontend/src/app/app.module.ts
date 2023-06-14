@@ -9,10 +9,13 @@ import {
   FacebookLoginProvider,
 } from '@abacritt/angularx-social-login';
 import { HomeComponent } from './home/home.component';
+import { HttpClientModule } from '@angular/common/http';
+import { GameComponent } from './game/game.component';
+import { NotFoundComponent } from './not-found/not-found.component';
 
 @NgModule({
-  declarations: [AppComponent, LoginComponent, HomeComponent],
-  imports: [BrowserModule, AppRoutingModule, SocialLoginModule],
+  declarations: [AppComponent, LoginComponent, HomeComponent, GameComponent, NotFoundComponent],
+  imports: [BrowserModule, AppRoutingModule, SocialLoginModule, HttpClientModule],
   providers: [
     {
       provide: 'SocialAuthServiceConfig',

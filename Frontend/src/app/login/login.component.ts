@@ -1,3 +1,4 @@
+import { TokenService } from './../services/token.service';
 import {
   FacebookLoginProvider,
   SocialAuthService,
@@ -5,7 +6,7 @@ import {
 } from '@abacritt/angularx-social-login';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-
+import { OAuthService } from '../services/oauth.service';
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
@@ -16,12 +17,23 @@ export class LoginComponent implements OnInit {
   loggedUser: SocialUser | null = null;
   isLogged: boolean = false;
 
-  constructor(private authService: SocialAuthService, private router: Router) {}
+  constructor(
+    private authService: SocialAuthService,
+    private router: Router,
+    private oAuthService: OAuthService,
+    private tokenService: TokenService
+  ) {}
 
   ngOnInit(): void {
-    this.authService.authState.subscribe((loggedUser) => {
-      this.loggedUser = loggedUser;
-      this.isLogged = this.loggedUser != null;
+    this.authService.authState.subscribe({
+      next: (loggedUser) => {
+        this.loggedUser = loggedUser;
+        this.isLogged =
+          this.loggedUser != null && this.tokenService.getToken != null;
+      },
+      error: (error) => {
+        console.log(error);
+      },
     });
   }
 
@@ -31,10 +43,20 @@ export class LoginComponent implements OnInit {
         scope: 'public_profile',
       })
       .then((socialUser) => {
-        console.log(socialUser.authToken)
         this.socialUser = socialUser;
-        this.isLogged = true;
-        this.router.navigate(['/']);
-      });
+        const tokenDto = {
+          value: this.socialUser.authToken,
+        };
+        this.oAuthService.facebook(tokenDto).subscribe({
+          next: (response) => {
+            this.tokenService.setToken(response.value);
+            this.router.navigate(['/']);
+          },
+          error: (error) => {
+            console.log(error);
+          },
+        });
+      })
+      .catch((error) => console.log(error));
   }
 }

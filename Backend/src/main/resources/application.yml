@@ -5,6 +5,7 @@ spring:
     mongodb:
       uri: ${MONGO_URI}
       database: ${MONGO_DB}
-jwt:
-  secret: ${JWT_SECRET}
-  expiration: ${JWT_EXP}
+  jwt:
+    secret: ${JWT_SECRET}
+  default:
+    password: ${DEFAULT_PASSWORD}

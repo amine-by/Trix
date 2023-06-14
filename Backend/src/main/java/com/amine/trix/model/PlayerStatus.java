@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PlayerStatus {
-	private String login;
+	private String id;
 	private int score;
 	private int hand;
 	private int collectedCards;
