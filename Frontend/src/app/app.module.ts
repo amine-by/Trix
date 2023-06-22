@@ -12,9 +12,11 @@ import { HomeComponent } from './home/home.component';
 import { HttpClientModule } from '@angular/common/http';
 import { GameComponent } from './game/game.component';
 import { NotFoundComponent } from './not-found/not-found.component';
+import { gameInterceptor } from './interceptors/game.interceptor';
+import { GamesComponent } from './games/games.component';
 
 @NgModule({
-  declarations: [AppComponent, LoginComponent, HomeComponent, GameComponent, NotFoundComponent],
+  declarations: [AppComponent, LoginComponent, HomeComponent, GameComponent, NotFoundComponent, GamesComponent],
   imports: [BrowserModule, AppRoutingModule, SocialLoginModule, HttpClientModule],
   providers: [
     {
@@ -32,6 +34,7 @@ import { NotFoundComponent } from './not-found/not-found.component';
         },
       } as SocialAuthServiceConfig,
     },
+    gameInterceptor
   ],
   bootstrap: [AppComponent],
 })

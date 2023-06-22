@@ -7,6 +7,7 @@ import {
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { OAuthService } from '../services/oauth.service';
+import { Title } from '@angular/platform-browser';
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
@@ -21,8 +22,11 @@ export class LoginComponent implements OnInit {
     private authService: SocialAuthService,
     private router: Router,
     private oAuthService: OAuthService,
-    private tokenService: TokenService
-  ) {}
+    private tokenService: TokenService,
+    private titleService: Title
+  ) {
+    this.titleService.setTitle('Login');
+  }
 
   ngOnInit(): void {
     this.authService.authState.subscribe({

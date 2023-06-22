@@ -19,12 +19,13 @@ export class GameInterceptor implements HttpInterceptor {
   ): Observable<HttpEvent<any>> {
     let authRequest = request;
     const token = this.tokenService.getToken();
-    if (token !== null)
+    if (token != null)
       authRequest = authRequest.clone({
-        headers: request.headers.set('Authorization', 'Bearer ' + token),
+        setHeaders: {
+          Authorization: "Bearer " + token
+        }
       });
-
-    return next.handle(request);
+    return next.handle(authRequest);
   }
 }
 

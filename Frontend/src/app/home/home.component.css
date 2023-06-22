@@ -3,7 +3,6 @@
   height: 100vh;
   align-items: center;
   justify-content: center;
-  color: white;
   font-size: 25px;
 }
 
@@ -20,10 +19,10 @@
 }
 
 button {
-  background-color: #0e7a0d;
-  color: white;
+  background-color: #f1f0eb;
+  color: black;
 }
 
 button:hover {
-  background-color: #119910;
+  background-color: #d4d2c5;
 }

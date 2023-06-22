@@ -6,12 +6,15 @@ import java.util.Collections;
 
 import javax.security.auth.login.AccountNotFoundException;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import com.amine.trix.dto.ConnectToGameDto;
+import com.amine.trix.dto.AvailableGamesDto;
 import com.amine.trix.dto.GameplayDto;
+import com.amine.trix.dto.JoinGameDto;
 import com.amine.trix.dto.MoveDto;
 import com.amine.trix.enums.GameStatus;
 import com.amine.trix.enums.Kingdom;
@@ -22,6 +25,7 @@ import com.amine.trix.exception.InvalidGameException;
 import com.amine.trix.exception.InvalidMoveException;
 import com.amine.trix.exception.InvalidParamException;
 import com.amine.trix.exception.UserAlreadyInGameException;
+import com.amine.trix.exception.UserIsNotInGameException;
 import com.amine.trix.model.Card;
 import com.amine.trix.model.Game;
 import com.amine.trix.repository.GameRepository;
@@ -40,8 +44,18 @@ public class GameService {
 	private final AccountRepository userRepository;
 	private final SimpMessagingTemplate simpMessagingTemplate;
 
+	// Returns list of games that are not full
+	public AvailableGamesDto findAvailableGames() {
+		AvailableGamesDto availableGamesResponse = new AvailableGamesDto();
+		// todo: Add PageDto for a more customized request?
+		Page<Game> games = gameRepository.findAvailableGames(PageRequest.of(0, 5));
+		availableGamesResponse.setGames(new ArrayList<>());
+		games.forEach((game) -> availableGamesResponse.getGames().add(game.getId()));
+		return availableGamesResponse;
+	}
+
 	// Creates a game and initializes the first player
-	public GameplayDto createGame() throws AccountNotFoundException, UserAlreadyInGameException {
+	public boolean createGame() throws AccountNotFoundException, UserAlreadyInGameException {
 
 		String accountId = SecurityContextHolder.getContext().getAuthentication().getName();
 
@@ -67,14 +81,12 @@ public class GameService {
 		user.setCurrentGame(game.getId());
 		userRepository.save(user);
 
-		GameplayDto gameplayResponse = new GameplayDto();
-		gameplayResponse.populateResponse(game, 0);
-		return gameplayResponse;
+		return true;
 	}
 
 	// Connects a player to the game and initializes them
 	// Starts the game in case it finds the last player
-	public GameplayDto connectToGame(ConnectToGameDto connectToGameRequest)
+	public boolean joinGame(JoinGameDto joinGameRequest)
 			throws InvalidParamException, InvalidGameException, AccountNotFoundException, UserAlreadyInGameException {
 
 		String accountId = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -83,9 +95,9 @@ public class GameService {
 				.orElseThrow(() -> new AccountNotFoundException("User does not exist"));
 
 		if (user.getCurrentGame() != null)
-			throw new UserAlreadyInGameException("User already in another game");
+			throw new UserAlreadyInGameException("User already in a game");
 
-		Game game = gameRepository.findById(connectToGameRequest.getGameId())
+		Game game = gameRepository.findById(joinGameRequest.getGameId())
 				.orElseThrow(() -> new InvalidParamException("Game does not exist"));
 
 		if (user.getCurrentGame() == game.getId())
@@ -109,6 +121,24 @@ public class GameService {
 		gameRepository.save(game);
 		user.setCurrentGame(game.getId());
 		userRepository.save(user);
+
+		updatePlayers(game, game.getPlayers().size() - 1);
+
+		return true;
+	}
+
+	public GameplayDto connectToGame()
+			throws AccountNotFoundException, UserIsNotInGameException, InvalidParamException {
+		String accountId = SecurityContextHolder.getContext().getAuthentication().getName();
+
+		Account user = userRepository.findById(accountId)
+				.orElseThrow(() -> new AccountNotFoundException("User does not exist"));
+
+		if (user.getCurrentGame() == null)
+			throw new UserIsNotInGameException("User is not in a game");
+
+		Game game = gameRepository.findById(user.getCurrentGame())
+				.orElseThrow(() -> new InvalidParamException("Game does not exist"));
 
 		GameplayDto gameplayResponse = new GameplayDto();
 		gameplayResponse.populateResponse(game, game.getPlayers().size() - 1);
@@ -161,6 +191,9 @@ public class GameService {
 
 		GameplayDto gameplayResponse = new GameplayDto();
 		gameplayResponse.populateResponse(game, game.getGameOwner());
+
+		updatePlayers(game, game.getGameOwner());
+
 		return gameplayResponse;
 	}
 
@@ -226,10 +259,11 @@ public class GameService {
 		gameRepository.save(game);
 		userRepository.save(user);
 
-		simpMessagingTemplate.convertAndSend("/api/play/topic/progress", game);
-
 		GameplayDto gameplayResponse = new GameplayDto();
 		gameplayResponse.populateResponse(game, TURN);
+
+		updatePlayers(game, TURN);
+
 		return gameplayResponse;
 	}
 
@@ -597,6 +631,18 @@ public class GameService {
 			if (card.getSuit() == suit)
 				result++;
 		return result;
+	}
+
+	private void updatePlayers(Game game, int currentPlayer) {
+		// todo: should update this algorithm to make it less slow
+		for (int i = 0; i < game.getPlayers().size(); i++) {
+			if (i != currentPlayer) {
+				GameplayDto gameplayResponse = new GameplayDto();
+				gameplayResponse.populateResponse(game, currentPlayer);
+				simpMessagingTemplate.convertAndSendToUser(game.getPlayers().get(i).getId(), "/api/play/queue",
+						gameplayResponse);
+			}
+		}
 	}
 
 }

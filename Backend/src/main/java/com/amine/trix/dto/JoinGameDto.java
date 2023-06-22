@@ -7,6 +7,6 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ConnectToGameDto {
+public class JoinGameDto {
 	private String gameId;
 }

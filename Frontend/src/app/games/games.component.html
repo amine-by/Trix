@@ -1,0 +1,10 @@
+<div class="layout">
+  <div class="container">
+    <h2>Games</h2>
+    <div class="btn-group">
+      <button *ngFor="let game of availableGames" (click)="joinGame(game)">
+        {{ game }}
+      </button>
+    </div>
+  </div>
+</div>

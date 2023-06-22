@@ -1,47 +1,7 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-
-interface Card {
-  rank: string;
-  suit: string;
-}
-
-interface Player {
-  id: string;
-  score: number;
-  hand: Array<Card>;
-  collectedCards: Array<Card>;
-  availableGames: Array<string>;
-}
-
-interface PlayerStatus {
-  id: string;
-  score: number;
-  hand: number;
-  collectedCards: number;
-}
-
-interface GameplayDto {
-  gameId: string;
-  gameOwner: number;
-  turn: number;
-  status: string;
-  currentKingdom: string;
-  trixBoard: Array<boolean> | null;
-  normalBoard: Array<Card> | null;
-  player: Player;
-  otherPlayers: PlayerStatus;
-}
-
-interface ConnectToGameDto {
-  gameId: string;
-}
-
-interface MoveDto {
-  move: number;
-  gameId: string;
-}
+import { AvailableGamesDto, GameplayDto, JoinGameDto, MoveDto } from '../interfaces/game.interface';
 
 const header = {
   headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
@@ -55,18 +15,32 @@ export class GameService {
 
   apiPrefix = '/api/game/';
 
-  public createGame(): Observable<GameplayDto> {
-    return this.HttpClient.post<GameplayDto>(this.apiPrefix + 'create', header);
-  }
-  public connectToGame(
-    connectToGameDto: ConnectToGameDto
-  ): Observable<GameplayDto> {
-    return this.HttpClient.post<GameplayDto>(
-      this.apiPrefix + 'connect',
-      connectToGameDto,
+  public findAvailableGames(): Observable<AvailableGamesDto> {
+    return this.HttpClient.get<AvailableGamesDto>(
+      this.apiPrefix + 'available',
       header
     );
   }
+
+  public createGame(): Observable<boolean> {
+    return this.HttpClient.post<boolean>(this.apiPrefix + 'create', header);
+  }
+
+  public joinGame(joinGameDto: JoinGameDto): Observable<boolean> {
+    return this.HttpClient.post<boolean>(
+      this.apiPrefix + 'join',
+      joinGameDto,
+      header
+    );
+  }
+
+  public connectToGame(): Observable<GameplayDto> {
+    return this.HttpClient.post<GameplayDto>(
+      this.apiPrefix + 'connect',
+      header
+    );
+  }
+
   public gameSelect(moveDto: MoveDto): Observable<GameplayDto> {
     return this.HttpClient.post<GameplayDto>(
       this.apiPrefix + 'select',

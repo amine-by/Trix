@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { SocialAuthService, SocialUser } from '@abacritt/angularx-social-login';
 import { Component, OnInit } from '@angular/core';
 import { TokenService } from '../services/token.service';
+import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-home',
@@ -17,12 +18,15 @@ export class HomeComponent implements OnInit {
     private authService: SocialAuthService,
     private gameService: GameService,
     private router: Router,
-    private tokenService: TokenService
-  ) {}
+    private tokenService: TokenService,
+    private titleService: Title
+  ) {
+    this.titleService.setTitle('Home');
+  }
   ngOnInit(): void {
     this.authService.authState.subscribe({
-      next: (loggedUser) => {
-        this.loggedUser = loggedUser;
+      next: (response) => {
+        this.loggedUser = response;
         this.isLogged =
           this.loggedUser != null && this.tokenService.getToken != null;
       },
@@ -34,8 +38,8 @@ export class HomeComponent implements OnInit {
 
   createGame() {
     this.gameService.createGame().subscribe({
-      next: (gameplayResponse) => console.log(gameplayResponse),
-      error: (error) => console.log(error),
+      next: (response: boolean) => response && this.router.navigate(['/game']),
+      error: (error) => console.error(error),
     });
   }
 
@@ -47,6 +51,6 @@ export class HomeComponent implements OnInit {
         this.isLogged = false;
         this.router.navigate(['/login']);
       })
-      .catch((error) => console.log(error));
+      .catch((error) => console.error(error));
   }
 }
