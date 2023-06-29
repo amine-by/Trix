@@ -2,6 +2,7 @@ package com.amine.trix.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -22,6 +23,7 @@ public class WebSecurityConfig {
 	@Bean
 	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		return http.csrf(c -> c.disable()).authorizeHttpRequests(auth -> {
+			auth.requestMatchers(HttpMethod.GET).permitAll();
 			auth.requestMatchers("/api/auth/**").permitAll();
 			auth.anyRequest().authenticated();
 		}).sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

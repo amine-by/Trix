@@ -17,7 +17,7 @@
       </div>
     </div>
     <div class="center">
-      <div class="normal_board">
+      <div *ngIf="normalBoard" class="normal_board">
         <div>
           <img [src]="getNormalBoardCardImage(0)" />
         </div>
@@ -31,6 +31,74 @@
           <img [src]="getNormalBoardCardImage(3)" />
         </div>
       </div>
+      <div *ngIf="trixBoard" class="trix_board">
+        <div>
+          <img *ngIf="trixBoard[7]" src="../../assets/cards/ACE_HEART.png" />
+          <img *ngIf="trixBoard[6]" src="../../assets/cards/KING_HEART.png" />
+          <img *ngIf="trixBoard[5]" src="../../assets/cards/QUEEN_HEART.png" />
+          <img *ngIf="trixBoard[4]" src="../../assets/cards/JACK_HEART.png" />
+          <img *ngIf="trixBoard[3]" src="../../assets/cards/TEN_HEART.png" />
+          <img *ngIf="trixBoard[2]" src="../../assets/cards/NINE_HEART.png" />
+          <img *ngIf="trixBoard[1]" src="../../assets/cards/EIGHT_HEART.png" />
+          <img *ngIf="trixBoard[0]" src="../../assets/cards/SEVEN_HEART.png" />
+        </div>
+        <div>
+          <img *ngIf="trixBoard[15]" src="../../assets/cards/ACE_SPADE.png" />
+          <img *ngIf="trixBoard[14]" src="../../assets/cards/KING_SPADE.png" />
+          <img *ngIf="trixBoard[13]" src="../../assets/cards/QUEEN_SPADE.png" />
+          <img *ngIf="trixBoard[12]" src="../../assets/cards/JACK_SPADE.png" />
+          <img *ngIf="trixBoard[11]" src="../../assets/cards/TEN_SPADE.png" />
+          <img *ngIf="trixBoard[10]" src="../../assets/cards/NINE_SPADE.png" />
+          <img *ngIf="trixBoard[9]" src="../../assets/cards/EIGHT_SPADE.png" />
+          <img *ngIf="trixBoard[8]" src="../../assets/cards/SEVEN_SPADE.png" />
+        </div>
+        <div>
+          <img *ngIf="trixBoard[23]" src="../../assets/cards/ACE_CLUB.png" />
+          <img *ngIf="trixBoard[22]" src="../../assets/cards/KING_CLUB.png" />
+          <img *ngIf="trixBoard[21]" src="../../assets/cards/QUEEN_CLUB.png" />
+          <img *ngIf="trixBoard[20]" src="../../assets/cards/JACK_CLUB.png" />
+          <img *ngIf="trixBoard[19]" src="../../assets/cards/TEN_CLUB.png" />
+          <img *ngIf="trixBoard[18]" src="../../assets/cards/NINE_CLUB.png" />
+          <img *ngIf="trixBoard[17]" src="../../assets/cards/EIGHT_CLUB.png" />
+          <img *ngIf="trixBoard[16]" src="../../assets/cards/SEVEN_CLUB.png" />
+        </div>
+        <div>
+          <img *ngIf="trixBoard[31]" src="../../assets/cards/ACE_DIAMOND.png" />
+          <img
+            *ngIf="trixBoard[30]"
+            src="../../assets/cards/KING_DIAMOND.png"
+          />
+          <img
+            *ngIf="trixBoard[29]"
+            src="../../assets/cards/QUEEN_DIAMOND.png"
+          />
+          <img
+            *ngIf="trixBoard[28]"
+            src="../../assets/cards/JACK_DIAMOND.png"
+          />
+          <img *ngIf="trixBoard[27]" src="../../assets/cards/TEN_DIAMOND.png" />
+          <img
+            *ngIf="trixBoard[26]"
+            src="../../assets/cards/NINE_DIAMOND.png"
+          />
+          <img
+            *ngIf="trixBoard[25]"
+            src="../../assets/cards/EIGHT_DIAMOND.png"
+          />
+          <img
+            *ngIf="trixBoard[24]"
+            src="../../assets/cards/SEVEN_DIAMOND.png"
+          />
+        </div>
+      </div>
+      <form *ngIf="availableGames">
+        <h2>Select Game</h2>
+        <div *ngFor="let game of availableGames; let index = index">
+          <input type="radio" name="game_select" [value]="index" />
+          <label>{{ game }}</label>
+        </div>
+        <input type="submit" value="Confirm" />
+      </form>
     </div>
     <div class="right">
       <div class="hand">

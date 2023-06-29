@@ -12,7 +12,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
 	@Override
 	public void registerStompEndpoints(StompEndpointRegistry registry) {
-		registry.addEndpoint("/api/play").withSockJS();
+		registry.addEndpoint("/api/play").setAllowedOrigins("http://localhost:4200").withSockJS();
 
 	}
 

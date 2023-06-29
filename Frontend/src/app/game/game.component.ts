@@ -43,17 +43,11 @@ export class GameComponent {
     },
   ];
 
-  normalBoard: Array<ICard> | null = [
-    {
-      rank: 'JACK',
-      suit: 'DIAMOND',
-    },
-    {
-      rank: 'QUEEN',
-      suit: 'DIAMOND',
-    },
-    
-  ];
+  availableGames: Array<string> | null = null
+
+  normalBoard: Array<ICard> | null = null;
+
+  trixBoard: Array<boolean> | null = null;
 
   constructor(private titleService: Title) {
     this.titleService.setTitle('Game');
