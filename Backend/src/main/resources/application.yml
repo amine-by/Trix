@@ -5,7 +5,25 @@ spring:
     mongodb:
       uri: ${MONGO_URI}
       database: ${MONGO_DB}
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GL_ID}
+            client-secret: ${GL_SECRET}
+            redirect-uri: "{baseUrl}/oauth2/callback/{registrationId}"
+            scope:
+            - email
+            - profile
+          facebook:
+            client-id: ${FB_ID}
+            client-secret: ${FB_SECRET}
+            redirect-uri: "{baseUrl}/oauth2/callback/{registrationId}"
+            scope:
+            - email
+            - public_profile
+app:
   jwt:
-    secret: ${JWT_SECRET}
-  default:
-    password: ${DEFAULT_PASSWORD}
+    expiration: ${TK_EXP}
+    secret: ${TK_SECRET}

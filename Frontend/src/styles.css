@@ -16,6 +16,8 @@ body {
 }
 
 button {
+  background-color: #f1f0eb;
+  color: #2c2c2c;
   border: none;
   cursor: pointer;
   padding: 12px;
@@ -23,4 +25,8 @@ button {
   font-weight: 800;
   border-radius: 15px;
   width: 220px;
+}
+
+button:hover {
+  background-color: #d4d2c5;
 }

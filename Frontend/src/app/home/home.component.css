@@ -17,12 +17,3 @@
   box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
   gap: 20px;
 }
-
-button {
-  background-color: #f1f0eb;
-  color: black;
-}
-
-button:hover {
-  background-color: #d4d2c5;
-}

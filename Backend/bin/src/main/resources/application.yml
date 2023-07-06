@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: Trix
+  data:
+    mongodb:
+      uri: ${MONGO_URI}
+      database: ${MONGO_DB}
+  jwt:
+    secret: ${JWT_SECRET}
+  default:
+    password: ${DEFAULT_PASSWORD}

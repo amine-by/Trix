@@ -7,22 +7,28 @@ import { connectedGuard } from './guards/connected.guard';
 import { disconnectedGuard } from './guards/disconnected.guard';
 import { NotFoundComponent } from './not-found/not-found.component';
 import { GamesComponent } from './games/games.component';
+import { RedirectComponent } from './redirect/redirect.component';
 
 const routes: Routes = [
   { path: '', component: HomeComponent, canActivate: [connectedGuard] },
+  { path: 'game', component: GameComponent, canActivate: [connectedGuard] },
+  { path: 'games', component: GamesComponent, canActivate: [connectedGuard] },
   {
     path: 'login',
     component: LoginComponent,
     canActivate: [disconnectedGuard],
   },
-  { path: 'game', component: GameComponent, canActivate: [connectedGuard] },
-  { path: 'games', component: GamesComponent, canActivate: [connectedGuard] },
+  {
+    path: 'redirect',
+    component: RedirectComponent,
+    canActivate: [disconnectedGuard],
+  },
   { path: '404', component: NotFoundComponent },
   { path: '**', redirectTo: '404' },
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes, { useHash: true })],
+  imports: [RouterModule.forRoot(routes)],
   exports: [RouterModule],
 })
 export class AppRoutingModule {}

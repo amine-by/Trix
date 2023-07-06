@@ -29,19 +29,19 @@ import com.amine.trix.exception.UserIsNotInGameException;
 import com.amine.trix.model.Card;
 import com.amine.trix.model.Game;
 import com.amine.trix.repository.GameRepository;
-import com.amine.trix.repository.AccountRepository;
+import com.amine.trix.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
 import com.amine.trix.model.Player;
-import com.amine.trix.model.Account;
+import com.amine.trix.model.User;
 
 @Service
 @RequiredArgsConstructor
 public class GameService {
 
 	private final GameRepository gameRepository;
-	private final AccountRepository userRepository;
+	private final UserRepository userRepository;
 	private final SimpMessagingTemplate simpMessagingTemplate;
 
 	// Returns list of games that are not full
@@ -57,9 +57,9 @@ public class GameService {
 	// Creates a game and initializes the first player
 	public boolean createGame() throws AccountNotFoundException, UserAlreadyInGameException {
 
-		String accountId = SecurityContextHolder.getContext().getAuthentication().getName();
-
-		Account user = userRepository.findById(accountId)
+		String email = SecurityContextHolder.getContext().getAuthentication().getName();
+		
+		User user = userRepository.findByEmail(email)
 				.orElseThrow(() -> new AccountNotFoundException("User does not exist"));
 
 		if (user.getCurrentGame() != null)
@@ -70,7 +70,7 @@ public class GameService {
 
 		Player player = new Player();
 		// Initializes the first player score, hand, and available games (kingdoms)
-		initializePlayer(player, accountId);
+		initializePlayer(player, email);
 		game.getPlayers().add(player);
 		game.setGameOwner(0);
 		game.setTurn(1);
@@ -89,9 +89,9 @@ public class GameService {
 	public boolean joinGame(JoinGameDto joinGameRequest)
 			throws InvalidParamException, InvalidGameException, AccountNotFoundException, UserAlreadyInGameException {
 
-		String accountId = SecurityContextHolder.getContext().getAuthentication().getName();
+		String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
-		Account user = userRepository.findById(accountId)
+		User user = userRepository.findByEmail(email)
 				.orElseThrow(() -> new AccountNotFoundException("User does not exist"));
 
 		if (user.getCurrentGame() != null)
@@ -108,7 +108,7 @@ public class GameService {
 
 		Player player = new Player();
 		// Initializes another player score, hand, and available games (kingdoms)
-		initializePlayer(player, accountId);
+		initializePlayer(player, email);
 		game.getPlayers().add(player);
 
 		// Starts the game in case it finds the last player and distributes cards to
@@ -129,9 +129,9 @@ public class GameService {
 
 	public GameplayDto connectToGame()
 			throws AccountNotFoundException, UserIsNotInGameException, InvalidParamException {
-		String accountId = SecurityContextHolder.getContext().getAuthentication().getName();
+		String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
-		Account user = userRepository.findById(accountId)
+		User user = userRepository.findByEmail(email)
 				.orElseThrow(() -> new AccountNotFoundException("User does not exist"));
 
 		if (user.getCurrentGame() == null)
@@ -149,9 +149,9 @@ public class GameService {
 	public GameplayDto gameSelect(MoveDto moveResponse) throws GameNotFoundException, InvalidGameException,
 			InvalidParamException, InvalidMoveException, AccountNotFoundException {
 
-		String accountId = SecurityContextHolder.getContext().getAuthentication().getName();
+		String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
-		Account user = userRepository.findById(accountId)
+		User user = userRepository.findByEmail(email)
 				.orElseThrow(() -> new AccountNotFoundException("User does not exist"));
 
 		Game game = gameRepository.findById(moveResponse.getGameId())
@@ -167,7 +167,7 @@ public class GameService {
 
 		if (gameOwner == null)
 			throw new InvalidParamException("Player does not exist");
-		if (!gameOwner.getId().equals(accountId))
+		if (!gameOwner.getId().equals(email))
 			throw new InvalidMoveException("Player is not the game owner");
 		if (gameOwner.getAvailableGames().get(moveResponse.getMove()) == null)
 			throw new InvalidParamException("Selected game is not available");
@@ -200,9 +200,9 @@ public class GameService {
 	public GameplayDto playCard(MoveDto moveResponse) throws GameNotFoundException, InvalidGameException,
 			InvalidParamException, InvalidMoveException, AccountNotFoundException {
 
-		String accountId = SecurityContextHolder.getContext().getAuthentication().getName();
+		String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
-		Account user = userRepository.findById(accountId)
+		User user = userRepository.findByEmail(email)
 				.orElseThrow(() -> new AccountNotFoundException("User does not exist"));
 
 		Game game = gameRepository.findById(moveResponse.getGameId())
@@ -220,7 +220,7 @@ public class GameService {
 		if (player == null)
 			throw new InvalidParamException("Player does not exist");
 
-		if (!player.getId().equals(accountId))
+		if (!player.getId().equals(email))
 			throw new InvalidMoveException("Player is not on his turn");
 
 		Card playedCard = player.getHand().get(moveResponse.getMove());
@@ -369,7 +369,7 @@ public class GameService {
 		return false;
 	}
 
-	private void checkEndOfTurnGameEnd(Game game, Account user) {
+	private void checkEndOfTurnGameEnd(Game game, User user) {
 		for (Player player : game.getPlayers())
 			if (player.getAvailableGames().size() > 0) {
 				distributeCards(game);
@@ -410,7 +410,7 @@ public class GameService {
 		return false;
 	}
 
-	private void trixGameplay(Game game, Account user, int move) throws InvalidParamException {
+	private void trixGameplay(Game game, User user, int move) throws InvalidParamException {
 		int cardRankValue = game.getPlayers().get(game.getTurn()).getHand().get(move).getRank().getTrixValue();
 		int cardSuitValue = game.getPlayers().get(game.getTurn()).getHand().get(move).getSuit().getValue();
 		Player player = game.getPlayers().get(game.getTurn());
@@ -450,7 +450,7 @@ public class GameService {
 		}
 	}
 
-	private void endOfTurnKingOfHeartGameplay(Game game, Account user) {
+	private void endOfTurnKingOfHeartGameplay(Game game, User user) {
 		final int RECIVING_PLAYER_INDEX = highestPlayerOnBoard(game);
 		Player recivingPlayer = game.getPlayers().get(RECIVING_PLAYER_INDEX);
 		if (boardContainsCard(game, Suit.HEART, Rank.KING)) {
@@ -464,7 +464,7 @@ public class GameService {
 		game.setNormalBoard(new ArrayList<Card>());
 	}
 
-	private void endOfTurnGameplay(Game game, Account user) {
+	private void endOfTurnGameplay(Game game, User user) {
 		final int RECIVING_PLAYER_INDEX = highestPlayerOnBoard(game);
 		Player player = game.getPlayers().get(game.getTurn());
 		Player currentPlayer;
@@ -611,8 +611,8 @@ public class GameService {
 			game.setTurn(RECIVING_PLAYER_INDEX);
 	}
 
-	private void initializePlayer(Player player, String accountId) {
-		player.setId(accountId);
+	private void initializePlayer(Player player, String email) {
+		player.setId(email);
 		player.setScore(0);
 		player.setAvailableGames(new ArrayList<Kingdom>(Arrays.asList(Kingdom.KING_OF_HEARTS, Kingdom.QUEENS,
 				Kingdom.DIAMONDS, Kingdom.GENERAL, Kingdom.TRIX)));

@@ -19,11 +19,16 @@
   gap: 20px;
 }
 
-button {
-  background-color: #4267b2;
-  color: white;
+img {
+  height: 20px;
 }
 
-button:hover {
-  background-color: #3b5998;
+button {
+  display: flex;
+  align-items: center;
+}
+
+button span {
+  flex: 1;
+  color: inherit;
 }

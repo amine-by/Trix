@@ -3,39 +3,30 @@ import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { LoginComponent } from './login/login.component';
-import {
-  SocialLoginModule,
-  SocialAuthServiceConfig,
-  FacebookLoginProvider,
-} from '@abacritt/angularx-social-login';
 import { HomeComponent } from './home/home.component';
 import { HttpClientModule } from '@angular/common/http';
 import { GameComponent } from './game/game.component';
 import { NotFoundComponent } from './not-found/not-found.component';
 import { gameInterceptor } from './interceptors/game.interceptor';
 import { GamesComponent } from './games/games.component';
+import { RedirectComponent } from './redirect/redirect.component';
 
 @NgModule({
-  declarations: [AppComponent, LoginComponent, HomeComponent, GameComponent, NotFoundComponent, GamesComponent],
-  imports: [BrowserModule, AppRoutingModule, SocialLoginModule, HttpClientModule],
-  providers: [
-    {
-      provide: 'SocialAuthServiceConfig',
-      useValue: {
-        autoLogin: false,
-        providers: [
-          {
-            id: FacebookLoginProvider.PROVIDER_ID,
-            provider: new FacebookLoginProvider('239505895347438'),
-          },
-        ],
-        onError: (err) => {
-          console.error(err);
-        },
-      } as SocialAuthServiceConfig,
-    },
-    gameInterceptor
+  declarations: [
+    AppComponent,
+    LoginComponent,
+    HomeComponent,
+    GameComponent,
+    NotFoundComponent,
+    GamesComponent,
+    RedirectComponent,
   ],
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    HttpClientModule,
+  ],
+  providers: [gameInterceptor],
   bootstrap: [AppComponent],
 })
 export class AppModule {}
