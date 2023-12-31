@@ -43,4 +43,12 @@ interface AvailableGamesDto {
   games: Array<string>;
 }
 
-export {ICard,IPlayer, IPlayerStatus, AvailableGamesDto, GameplayDto, JoinGameDto, MoveDto }
+export {
+  ICard,
+  IPlayer,
+  IPlayerStatus,
+  AvailableGamesDto,
+  GameplayDto,
+  JoinGameDto,
+  MoveDto,
+};

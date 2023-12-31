@@ -1,13 +1,15 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ICard } from '../interfaces/game.interface';
-
+import * as SockJS from 'sockjs-client';
+import * as Stomp from 'stompjs';
+import { TokenService } from '../services/token.service';
 @Component({
   selector: 'app-game',
   templateUrl: './game.component.html',
   styleUrls: ['./game.component.css'],
 })
-export class GameComponent {
+export class GameComponent implements OnInit {
   cards = [
     {
       rank: 'SEVEN',
@@ -43,14 +45,30 @@ export class GameComponent {
     },
   ];
 
-  availableGames: Array<string> | null = null
+  availableGames: Array<string> = ['Trix', 'King of Hearts'];
 
   normalBoard: Array<ICard> | null = null;
 
   trixBoard: Array<boolean> | null = null;
 
-  constructor(private titleService: Title) {
+  constructor(private titleService: Title, private tokenService: TokenService) {
     this.titleService.setTitle('Game');
+  }
+
+  ngOnInit(): void {
+    let socket = new SockJS('/ws');
+    let stompClient = Stomp.over(socket);
+    stompClient.connect(
+      {
+        Authorization: 'Bearer ' + this.tokenService.getToken(),
+      },
+      function (frame) {
+        console.log(frame);
+        stompClient.subscribe('/user/queue', (message) => {
+          console.log(message);
+        });
+      }
+    );
   }
 
   getNormalBoardCardImage(i: number) {

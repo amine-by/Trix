@@ -91,7 +91,7 @@
           />
         </div>
       </div>
-      <form *ngIf="availableGames">
+      <form *ngIf="availableGames.length > 0">
         <h2>Select Game</h2>
         <div *ngFor="let game of availableGames; let index = index">
           <input type="radio" name="game_select" [value]="index" />

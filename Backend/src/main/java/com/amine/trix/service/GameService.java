@@ -639,7 +639,7 @@ public class GameService {
 			if (i != currentPlayer) {
 				GameplayDto gameplayResponse = new GameplayDto();
 				gameplayResponse.populateResponse(game, currentPlayer);
-				simpMessagingTemplate.convertAndSendToUser(game.getPlayers().get(i).getId(), "/api/play/queue",
+				simpMessagingTemplate.convertAndSendToUser(game.getPlayers().get(i).getId(), "/queue",
 						gameplayResponse);
 			}
 		}

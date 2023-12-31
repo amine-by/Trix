@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 
-const REDIRECT_URI = "?redirect_uri=http://localhost:4200/redirect"
+const REDIRECT_URI = '?redirect_uri=http://localhost:4200/redirect';
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',

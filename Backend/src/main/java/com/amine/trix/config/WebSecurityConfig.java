@@ -15,6 +15,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.amine.trix.security.CustomOAuth2UserService;
+
+import static org.springframework.security.config.Customizer.withDefaults;
 import com.amine.trix.security.CustomUserDetailsService;
 import com.amine.trix.security.TokenAuthenticationFilter;
 
@@ -52,12 +54,13 @@ public class WebSecurityConfig {
 
 	@Bean
 	SecurityFilterChain configure(HttpSecurity http) throws Exception {
-		return http.cors(cors -> cors.disable()).csrf(csrf -> csrf.disable()).formLogin(fl -> fl.disable())
+		return http.cors(withDefaults()).csrf(csrf -> csrf.disable()).formLogin(fl -> fl.disable())
 				.httpBasic(httpBasic -> httpBasic.disable())
 				.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				.authorizeHttpRequests(
-						auth -> auth.requestMatchers("/oauth2/**").permitAll().anyRequest().authenticated())
-				.oauth2Login(oauth -> {
+				.authorizeHttpRequests(auth -> {
+					auth.requestMatchers("/oauth2/**","/ws/**").permitAll();
+					auth.anyRequest().authenticated();
+				}).oauth2Login(oauth -> {
 					oauth.authorizationEndpoint(ae -> {
 						ae.baseUri("/oauth2/authorization");
 						ae.authorizationRequestRepository(httpCookieOAuth2AuthorizationRequestRepository);
@@ -66,7 +69,6 @@ public class WebSecurityConfig {
 					oauth.userInfoEndpoint(uie -> uie.userService(customOAuth2UserService));
 					oauth.successHandler(oAuth2AuthenticationSuccessHandler);
 					oauth.failureHandler(oAuth2AuthenticationFailureHandler);
-				})
-				.addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class).build();
+				}).addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class).build();
 	}
 }
