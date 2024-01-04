@@ -1,9 +1,12 @@
 package com.amine.trix.utils;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Base64;
 import java.util.Optional;
-
-import org.springframework.util.SerializationUtils;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -46,14 +49,18 @@ public class CookieUtils {
         }
     }
 
-    public static String serialize(Object object) {
-        return Base64.getUrlEncoder()
-                .encodeToString(SerializationUtils.serialize(object));
+    public static String serialize(Object object) throws IOException {
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+             ObjectOutputStream oos = new ObjectOutputStream(bos)) {
+            oos.writeObject(object);
+            return Base64.getUrlEncoder().encodeToString(bos.toByteArray());
+        }
     }
 
-    @SuppressWarnings("deprecation")
-	public static <T> T deserialize(Cookie cookie, Class<T> cls) {
-        return cls.cast(SerializationUtils.deserialize(
-                        Base64.getUrlDecoder().decode(cookie.getValue())));
+    public static <T> T deserialize(Cookie cookie, Class<T> cls) throws IOException, ClassNotFoundException {
+        byte[] data = Base64.getUrlDecoder().decode(cookie.getValue());
+        try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(data))) {
+            return cls.cast(ois.readObject());
+        }
     }
 }

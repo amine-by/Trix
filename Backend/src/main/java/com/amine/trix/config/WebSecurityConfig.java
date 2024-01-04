@@ -18,6 +18,7 @@ import com.amine.trix.security.CustomOAuth2UserService;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 import com.amine.trix.security.CustomUserDetailsService;
+import com.amine.trix.security.RestAuthenticationEntryPoint;
 import com.amine.trix.security.TokenAuthenticationFilter;
 
 import lombok.RequiredArgsConstructor;
@@ -57,8 +58,9 @@ public class WebSecurityConfig {
 		return http.cors(withDefaults()).csrf(csrf -> csrf.disable()).formLogin(fl -> fl.disable())
 				.httpBasic(httpBasic -> httpBasic.disable())
 				.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				.exceptionHandling(eh -> eh.authenticationEntryPoint(new RestAuthenticationEntryPoint()))
 				.authorizeHttpRequests(auth -> {
-					auth.requestMatchers("/oauth2/**","/ws/**").permitAll();
+					auth.requestMatchers("/auth/**","/oauth2/**","/ws/**").permitAll();
 					auth.anyRequest().authenticated();
 				}).oauth2Login(oauth -> {
 					oauth.authorizationEndpoint(ae -> {

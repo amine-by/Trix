@@ -1,6 +1,10 @@
 <div class="layout">
   <div class="container">
-    <h2>Login</h2>
+    <h2>Register</h2>
+    <div class="input">
+      <label>Name:</label>
+      <input type="text" placeholder="Name" (keyup)="onChangeName($event)" />
+    </div>
     <div class="input">
       <label>Email:</label>
       <input type="text" placeholder="Email" (keyup)="onChangeEmail($event)" />
@@ -13,8 +17,8 @@
         (keyup)="onChangePassword($event)"
       />
     </div>
-    <button class="btn-login" (click)="login()">
-      <span>Login</span>
+    <button class="btn-login" (click)="register()">
+      <span>Register</span>
     </button>
     <span class="span-or">OR</span>
     <button (click)="continueWithFacebook()">
@@ -26,8 +30,8 @@
       <span>Continue with Google</span>
     </button>
     <div class="text">
-      <span>New user?</span>
-      <button (click)="register()">Register</button>
+      <span>Already have an account?</span>
+      <button (click)="login()">Login</button>
     </div>
   </div>
 </div>

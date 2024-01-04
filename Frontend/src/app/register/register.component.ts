@@ -1,27 +1,33 @@
-import { TokenService } from './../services/token.service';
-import { AuthService } from './../services/auth.service';
 import { Component } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { Router } from '@angular/router';
+import { TokenService } from '../services/token.service';
+import { AuthService } from '../services/auth.service';
 
 const REDIRECT_URI = '?redirect_uri=http://localhost:4200/redirect';
+
 @Component({
-  selector: 'app-login',
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css'],
+  selector: 'app-register',
+  templateUrl: './register.component.html',
+  styleUrls: ['./register.component.css'],
 })
-export class LoginComponent {
+export class RegisterComponent {
   constructor(
     private titleService: Title,
     private router: Router,
     private authService: AuthService,
     private tokenService: TokenService
   ) {
-    this.titleService.setTitle('Login');
+    this.titleService.setTitle('Register');
   }
 
+  name: string = '';
   email: string = '';
   password: string = '';
+
+  onChangeName(event: any) {
+    this.name = event.target.value;
+  }
 
   onChangeEmail(event: any) {
     this.email = event.target.value;
@@ -31,9 +37,13 @@ export class LoginComponent {
     this.password = event.target.value;
   }
 
-  login() {
-    const loginDto = { email: this.email, password: this.password };
-    this.authService.authenticateUser(loginDto).subscribe({
+  register() {
+    const registerDto = {
+      name: this.name,
+      email: this.email,
+      password: this.password,
+    };
+    this.authService.registerUser(registerDto).subscribe({
       next: (response) => {
         this.tokenService.setToken(response.accessToken);
         this.router.navigate(['/']);
@@ -50,7 +60,7 @@ export class LoginComponent {
     location.href = '/oauth2/authorization/google' + REDIRECT_URI;
   }
 
-  register() {
-    this.router.navigate(['/register']);
+  login() {
+    this.router.navigate(['/login']);
   }
 }

@@ -10,6 +10,7 @@ import { NotFoundComponent } from './not-found/not-found.component';
 import { gameInterceptor } from './interceptors/game.interceptor';
 import { GamesComponent } from './games/games.component';
 import { RedirectComponent } from './redirect/redirect.component';
+import { RegisterComponent } from './register/register.component';
 
 @NgModule({
   declarations: [
@@ -20,6 +21,7 @@ import { RedirectComponent } from './redirect/redirect.component';
     NotFoundComponent,
     GamesComponent,
     RedirectComponent,
+    RegisterComponent,
   ],
   imports: [
     BrowserModule,

@@ -8,6 +8,7 @@ import { disconnectedGuard } from './guards/disconnected.guard';
 import { NotFoundComponent } from './not-found/not-found.component';
 import { GamesComponent } from './games/games.component';
 import { RedirectComponent } from './redirect/redirect.component';
+import { RegisterComponent } from './register/register.component';
 
 const routes: Routes = [
   { path: '', component: HomeComponent, canActivate: [connectedGuard] },
@@ -16,6 +17,11 @@ const routes: Routes = [
   {
     path: 'login',
     component: LoginComponent,
+    canActivate: [disconnectedGuard],
+  },
+  {
+    path: 'register',
+    component: RegisterComponent,
     canActivate: [disconnectedGuard],
   },
   {
