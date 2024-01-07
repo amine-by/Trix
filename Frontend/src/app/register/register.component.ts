@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { TokenService } from '../services/token.service';
 import { AuthService } from '../services/auth.service';
 
-const REDIRECT_URI = '?redirect_uri=http://localhost:4200/redirect';
+const REDIRECT_URI = `?redirect_uri=${window.location.origin}/redirect`;
 
 @Component({
   selector: 'app-register',
@@ -12,6 +12,10 @@ const REDIRECT_URI = '?redirect_uri=http://localhost:4200/redirect';
   styleUrls: ['./register.component.css'],
 })
 export class RegisterComponent {
+  name: string = '';
+  email: string = '';
+  password: string = '';
+
   constructor(
     private titleService: Title,
     private router: Router,
@@ -20,10 +24,6 @@ export class RegisterComponent {
   ) {
     this.titleService.setTitle('Register');
   }
-
-  name: string = '';
-  email: string = '';
-  password: string = '';
 
   onChangeName(event: any) {
     this.name = event.target.value;

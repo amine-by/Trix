@@ -2,6 +2,7 @@ package com.amine.trix.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -60,6 +61,7 @@ public class WebSecurityConfig {
 				.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.exceptionHandling(eh -> eh.authenticationEntryPoint(new RestAuthenticationEntryPoint()))
 				.authorizeHttpRequests(auth -> {
+					auth.requestMatchers(HttpMethod.GET).permitAll();
 					auth.requestMatchers("/auth/**","/oauth2/**","/ws/**").permitAll();
 					auth.anyRequest().authenticated();
 				}).oauth2Login(oauth -> {

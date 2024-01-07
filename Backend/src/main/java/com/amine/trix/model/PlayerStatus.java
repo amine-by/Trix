@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class PlayerStatus {
 	private String id;
+	private String name;
 	private int score;
 	private int hand;
 	private int collectedCards;

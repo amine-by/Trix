@@ -29,22 +29,29 @@ public class GameplayDto {
 	public void populateResponse(Game game, int playerIndex) {
 		otherPlayers = new ArrayList<PlayerStatus>();
 		ArrayList<Player> players = game.getPlayers();
-		for (int i = 0; i < players.size(); i++) {
+		for (int i = 1; i < players.size(); i++) {
+			if (game.getGameOwner() == (i + playerIndex) % players.size())
+				gameOwner = otherPlayers.size();
+			if (game.getTurn() == (i + playerIndex) % players.size())
+				turn = otherPlayers.size();
 			Player player = players.get((i + playerIndex) % players.size());
-			if (i != playerIndex) {
-				PlayerStatus playerStatus = new PlayerStatus();
-				playerStatus.setId(player.getId());
-				playerStatus.setScore(player.getScore());
-				playerStatus.setHand((player.getHand() == null) ? 0 : player.getHand().size());
-				playerStatus.setCollectedCards(
-						(player.getCollectedCards() == null) ? 0 : player.getCollectedCards().size());
-				otherPlayers.add(playerStatus);
-			}
+			PlayerStatus playerStatus = new PlayerStatus();
+			playerStatus.setId(player.getId());
+			playerStatus.setName(player.getName());
+			playerStatus.setScore(player.getScore());
+			playerStatus.setHand((player.getHand() == null) ? 0 : player.getHand().size());
+			playerStatus
+					.setCollectedCards((player.getCollectedCards() == null) ? 0 : player.getCollectedCards().size());
+			otherPlayers.add(playerStatus);
 		}
 
+		if (playerIndex == game.getGameOwner())
+			gameOwner = 3;
+		
+		if(playerIndex == game.getTurn())
+			turn = 3;
+
 		gameId = game.getId();
-		gameOwner = game.getGameOwner();
-		turn = game.getTurn();
 		status = game.getStatus();
 		currentKingdom = game.getCurrentKingdom();
 		trixBoard = game.getTrixBoard();

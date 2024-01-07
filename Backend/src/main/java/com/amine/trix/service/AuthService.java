@@ -12,7 +12,7 @@ import com.amine.trix.dto.AuthDto;
 import com.amine.trix.dto.LoginDto;
 import com.amine.trix.dto.RegisterDto;
 import com.amine.trix.enums.Provider;
-import com.amine.trix.exception.BadRequestException;
+import com.amine.trix.exception.InvalidParamException;
 import com.amine.trix.model.User;
 import com.amine.trix.repository.UserRepository;
 
@@ -37,9 +37,13 @@ public class AuthService {
 
 	}
 
-	public AuthDto registerUser(RegisterDto registerDto) throws BadRequestException {
+	public AuthDto registerUser(RegisterDto registerDto) throws InvalidParamException {
+		if(!isValidEmail(registerDto.getEmail())){
+			throw new InvalidParamException("Invalid email format");
+		}
+		
 		if (userRepository.existsByEmail(registerDto.getEmail())) {
-			throw new BadRequestException("Email address already in use.");
+			throw new InvalidParamException("Email address already in use.");
 		}
 		User user = new User();
 		user.setName(registerDto.getName());
@@ -60,5 +64,10 @@ public class AuthService {
 
 		return new AuthDto(token);
 
+	}
+	
+	private boolean isValidEmail(String email) {
+	    String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
+	    return email.matches(emailRegex);
 	}
 }

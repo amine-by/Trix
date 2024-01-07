@@ -4,13 +4,16 @@ import { Component } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 
-const REDIRECT_URI = '?redirect_uri=http://localhost:4200/redirect';
+const REDIRECT_URI = `?redirect_uri=${window.location.origin}/redirect`;
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css'],
 })
 export class LoginComponent {
+  email: string = '';
+  password: string = '';
+
   constructor(
     private titleService: Title,
     private router: Router,
@@ -19,9 +22,6 @@ export class LoginComponent {
   ) {
     this.titleService.setTitle('Login');
   }
-
-  email: string = '';
-  password: string = '';
 
   onChangeEmail(event: any) {
     this.email = event.target.value;

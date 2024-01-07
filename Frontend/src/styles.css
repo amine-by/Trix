@@ -31,7 +31,8 @@ button:hover {
   background-color: #d4d2c5;
 }
 
-input {
+input[type="text"],
+input[type="password"] {
   color: black;
   font-size: 12px;
   padding: 12px;
@@ -40,6 +41,7 @@ input {
   border: none;
 }
 
-input:focus {
+input[type="text"]:focus,
+input[type="password"]:focus {
   outline-color: #778899;
 }

@@ -20,7 +20,6 @@ import com.amine.trix.enums.GameStatus;
 import com.amine.trix.enums.Kingdom;
 import com.amine.trix.enums.Rank;
 import com.amine.trix.enums.Suit;
-import com.amine.trix.exception.GameNotFoundException;
 import com.amine.trix.exception.InvalidGameException;
 import com.amine.trix.exception.InvalidMoveException;
 import com.amine.trix.exception.InvalidParamException;
@@ -47,18 +46,26 @@ public class GameService {
 	// Returns list of games that are not full
 	public AvailableGamesDto findAvailableGames() {
 		AvailableGamesDto availableGamesResponse = new AvailableGamesDto();
-		// todo: Add PageDto for a more customized request?
+		// TODO: Add GamePageDto for a more customized request?
 		Page<Game> games = gameRepository.findAvailableGames(PageRequest.of(0, 5));
 		availableGamesResponse.setGames(new ArrayList<>());
 		games.forEach((game) -> availableGamesResponse.getGames().add(game.getId()));
 		return availableGamesResponse;
 	}
 
+	// Checks if player is already in a game
+	public boolean isPlayerInGame() throws AccountNotFoundException {
+		String email = SecurityContextHolder.getContext().getAuthentication().getName();
+		User user = userRepository.findByEmail(email)
+				.orElseThrow(() -> new AccountNotFoundException("User does not exist"));
+		return user.getCurrentGame() != null;
+	}
+
 	// Creates a game and initializes the first player
 	public boolean createGame() throws AccountNotFoundException, UserAlreadyInGameException {
 
 		String email = SecurityContextHolder.getContext().getAuthentication().getName();
-		
+
 		User user = userRepository.findByEmail(email)
 				.orElseThrow(() -> new AccountNotFoundException("User does not exist"));
 
@@ -70,7 +77,7 @@ public class GameService {
 
 		Player player = new Player();
 		// Initializes the first player score, hand, and available games (kingdoms)
-		initializePlayer(player, email);
+		initializePlayer(player, email, user.getName());
 		game.getPlayers().add(player);
 		game.setGameOwner(0);
 		game.setTurn(1);
@@ -108,7 +115,7 @@ public class GameService {
 
 		Player player = new Player();
 		// Initializes another player score, hand, and available games (kingdoms)
-		initializePlayer(player, email);
+		initializePlayer(player, email, user.getName());
 		game.getPlayers().add(player);
 
 		// Starts the game in case it finds the last player and distributes cards to
@@ -141,13 +148,13 @@ public class GameService {
 				.orElseThrow(() -> new InvalidParamException("Game does not exist"));
 
 		GameplayDto gameplayResponse = new GameplayDto();
-		gameplayResponse.populateResponse(game, game.getPlayers().size() - 1);
+		gameplayResponse.populateResponse(game, determinePlayerIndexByEmail(game, email));
 		return gameplayResponse;
 	}
 
 	// Enables the game owner to select a game (kingdom)
-	public GameplayDto gameSelect(MoveDto moveResponse) throws GameNotFoundException, InvalidGameException,
-			InvalidParamException, InvalidMoveException, AccountNotFoundException {
+	public GameplayDto gameSelect(MoveDto moveResponse)
+			throws InvalidGameException, InvalidParamException, InvalidMoveException, AccountNotFoundException {
 
 		String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
@@ -157,7 +164,7 @@ public class GameService {
 		Game game = gameRepository.findById(moveResponse.getGameId())
 				.orElseThrow(() -> new InvalidParamException("Game does not exist"));
 
-		if (game.getId() != user.getCurrentGame())
+		if (!game.getId().equals(user.getCurrentGame()))
 			throw new InvalidGameException("User is not in this game");
 
 		if (!game.getStatus().equals(GameStatus.KINGDOM_SELECTION))
@@ -197,8 +204,9 @@ public class GameService {
 		return gameplayResponse;
 	}
 
-	public GameplayDto playCard(MoveDto moveResponse) throws GameNotFoundException, InvalidGameException,
-			InvalidParamException, InvalidMoveException, AccountNotFoundException {
+	public GameplayDto playCard(MoveDto moveResponse) throws InvalidGameException,
+
+			InvalidParamException, InvalidMoveException, AccountNotFoundException, InterruptedException {
 
 		String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
@@ -208,7 +216,7 @@ public class GameService {
 		Game game = gameRepository.findById(moveResponse.getGameId())
 				.orElseThrow(() -> new InvalidParamException("Game does not exist"));
 
-		if (game.getId() != user.getCurrentGame())
+		if (!game.getId().equals(user.getCurrentGame()))
 			throw new InvalidGameException("User is not in this game");
 
 		final int TURN = game.getTurn();
@@ -242,12 +250,13 @@ public class GameService {
 				throw new InvalidParamException("King of heart is not playable");
 
 			if (game.getCurrentKingdom() == Kingdom.DIAMONDS && game.getNormalBoard().size() == 0
-					&& playedCard.getSuit() == Suit.DIAMOND && collectedCardsContainsSuit(game, Suit.DIAMOND))
+					&& playedCard.getSuit() == Suit.DIAMOND && collectedCardsNotContainsSuit(game, Suit.DIAMOND))
 				throw new InvalidParamException("Diamond cards are not playable yet");
 
 			playNormalCard(game, playedCard, game.getTurn(), moveResponse.getMove());
 
 			if (game.getNormalBoard().size() == 4) {
+				updateAllPlayersWithDelay(game);
 				if (game.getCurrentKingdom() == Kingdom.KING_OF_HEARTS)
 					endOfTurnKingOfHeartGameplay(game, user);
 				else
@@ -265,6 +274,14 @@ public class GameService {
 		updatePlayers(game, TURN);
 
 		return gameplayResponse;
+	}
+
+	private int determinePlayerIndexByEmail(Game game, String email) {
+		for (int i = 1; i < game.getPlayers().size(); i++) {
+			if (email.equals(game.getPlayers().get(i).getId()))
+				return i;
+		}
+		return 0;
 	}
 
 	private void distributeCards(Game game) {
@@ -361,12 +378,12 @@ public class GameService {
 		return false;
 	}
 
-	private boolean collectedCardsContainsSuit(Game game, Suit suit) {
+	private boolean collectedCardsNotContainsSuit(Game game, Suit suit) {
 		for (Player player : game.getPlayers())
 			for (Card card : player.getCollectedCards())
 				if (card != null && card.getSuit() == suit)
-					return true;
-		return false;
+					return false;
+		return true;
 	}
 
 	private void checkEndOfTurnGameEnd(Game game, User user) {
@@ -426,7 +443,7 @@ public class GameService {
 					addedScore = -100;
 					if (player.getId() == user.getId())
 						addedScore *= 2;
-					player.setScore(addedScore);
+					player.setScore(player.getScore() + addedScore);
 					if (player.getScore() % 1000 == 0)
 						player.setScore(0);
 					determineTrixTurn(game);
@@ -611,8 +628,9 @@ public class GameService {
 			game.setTurn(RECIVING_PLAYER_INDEX);
 	}
 
-	private void initializePlayer(Player player, String email) {
+	private void initializePlayer(Player player, String email, String name) {
 		player.setId(email);
+		player.setName(name);
 		player.setScore(0);
 		player.setAvailableGames(new ArrayList<Kingdom>(Arrays.asList(Kingdom.KING_OF_HEARTS, Kingdom.QUEENS,
 				Kingdom.DIAMONDS, Kingdom.GENERAL, Kingdom.TRIX)));
@@ -634,15 +652,23 @@ public class GameService {
 	}
 
 	private void updatePlayers(Game game, int currentPlayer) {
-		// todo: should update this algorithm to make it less slow
+		// TODO: should update this algorithm to make it less slow
 		for (int i = 0; i < game.getPlayers().size(); i++) {
 			if (i != currentPlayer) {
 				GameplayDto gameplayResponse = new GameplayDto();
-				gameplayResponse.populateResponse(game, currentPlayer);
+				gameplayResponse.populateResponse(game, i);
 				simpMessagingTemplate.convertAndSendToUser(game.getPlayers().get(i).getId(), "/queue",
 						gameplayResponse);
 			}
 		}
 	}
 
+	private void updateAllPlayersWithDelay(Game game) throws InterruptedException {
+		for (int i = 0; i < game.getPlayers().size(); i++) {
+			GameplayDto gameplayResponse = new GameplayDto();
+			gameplayResponse.populateResponse(game, i);
+			simpMessagingTemplate.convertAndSendToUser(game.getPlayers().get(i).getId(), "/queue", gameplayResponse);
+		}
+		Thread.sleep(1000);
+	}
 }

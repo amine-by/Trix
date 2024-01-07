@@ -1,6 +1,6 @@
 package com.amine.trix.controller;
 
-import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.amine.trix.dto.AuthDto;
 import com.amine.trix.dto.LoginDto;
 import com.amine.trix.dto.RegisterDto;
-import com.amine.trix.exception.BadRequestException;
+import com.amine.trix.exception.InvalidParamException;
 import com.amine.trix.service.AuthService;
 
 import lombok.AllArgsConstructor;
@@ -23,11 +23,11 @@ public class AuthController {
 
 	@PostMapping("/login")
 	public ResponseEntity<AuthDto> authenticateUser(@RequestBody LoginDto loginDto) {
-		return new ResponseEntity<AuthDto>(authService.authenticateUser(loginDto), new HttpHeaders(), 200);
+		return new ResponseEntity<AuthDto>(authService.authenticateUser(loginDto), HttpStatus.OK);
 	}
 	
 	@PostMapping("/register")
-	public ResponseEntity<AuthDto> registerUser(@RequestBody RegisterDto registerDto) throws BadRequestException {
-		return new ResponseEntity<AuthDto>(authService.registerUser(registerDto), new HttpHeaders(), 201);
+	public ResponseEntity<AuthDto> registerUser(@RequestBody RegisterDto registerDto) throws  InvalidParamException{
+		return new ResponseEntity<AuthDto>(authService.registerUser(registerDto), HttpStatus.CREATED);
 	}
 }

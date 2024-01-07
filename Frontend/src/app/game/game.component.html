@@ -3,115 +3,252 @@
     <div class="top">
       <div class="hand">
         <img
-          *ngFor="let card of cards"
+          *ngFor="let _ of [].constructor(getHandSize(0))"
           src="../../assets/cards/CARD_BACK_VERTICAL.png"
         />
       </div>
+      <div class="profile">
+        <label [ngStyle]="isTurn(1)">{{ getPlayer(1)?.name }}</label>
+        <label [ngStyle]="isGameOwner(1)">{{ getPlayer(1)?.score }}</label>
+      </div>
     </div>
     <div class="left">
+      <div class="profile">
+        <label [ngStyle]="isTurn(0)">{{ getPlayer(0)?.name }}</label>
+        <label [ngStyle]="isGameOwner(0)">{{ getPlayer(0)?.score }}</label>
+      </div>
       <div class="hand">
         <img
-          *ngFor="let card of cards"
+          *ngFor="let _ of [].constructor(getHandSize(1))"
           src="../../assets/cards/CARD_BACK_HORIZONTAL.png"
         />
       </div>
     </div>
     <div class="center">
-      <div *ngIf="normalBoard" class="normal_board">
+      <div
+        *ngIf="
+          normalBoard &&
+          this.gameState?.status === 'ROUND_IN_PROGRESS' &&
+          this.gameState?.currentKingdom !== 'TRIX'
+        "
+        class="normal_board"
+      >
         <div>
-          <img [src]="getNormalBoardCardImage(0)" />
+          <img [src]="normalBoard[1]" />
         </div>
         <div>
-          <img [src]="getNormalBoardCardImage(2)" />
+          <img [src]="normalBoard[0]" />
         </div>
         <div>
-          <img [src]="getNormalBoardCardImage(1)" />
+          <img [src]="normalBoard[2]" />
         </div>
         <div>
-          <img [src]="getNormalBoardCardImage(3)" />
+          <img [src]="normalBoard[3]" />
         </div>
       </div>
-      <div *ngIf="trixBoard" class="trix_board">
+      <div
+        *ngIf="
+          this.gameState?.trixBoard &&
+          this.gameState?.status === 'ROUND_IN_PROGRESS' &&
+          this.gameState?.currentKingdom === 'TRIX'
+        "
+        class="trix_board"
+      >
         <div>
-          <img *ngIf="trixBoard[7]" src="../../assets/cards/ACE_HEART.png" />
-          <img *ngIf="trixBoard[6]" src="../../assets/cards/KING_HEART.png" />
-          <img *ngIf="trixBoard[5]" src="../../assets/cards/QUEEN_HEART.png" />
-          <img *ngIf="trixBoard[4]" src="../../assets/cards/JACK_HEART.png" />
-          <img *ngIf="trixBoard[3]" src="../../assets/cards/TEN_HEART.png" />
-          <img *ngIf="trixBoard[2]" src="../../assets/cards/NINE_HEART.png" />
-          <img *ngIf="trixBoard[1]" src="../../assets/cards/EIGHT_HEART.png" />
-          <img *ngIf="trixBoard[0]" src="../../assets/cards/SEVEN_HEART.png" />
-        </div>
-        <div>
-          <img *ngIf="trixBoard[15]" src="../../assets/cards/ACE_SPADE.png" />
-          <img *ngIf="trixBoard[14]" src="../../assets/cards/KING_SPADE.png" />
-          <img *ngIf="trixBoard[13]" src="../../assets/cards/QUEEN_SPADE.png" />
-          <img *ngIf="trixBoard[12]" src="../../assets/cards/JACK_SPADE.png" />
-          <img *ngIf="trixBoard[11]" src="../../assets/cards/TEN_SPADE.png" />
-          <img *ngIf="trixBoard[10]" src="../../assets/cards/NINE_SPADE.png" />
-          <img *ngIf="trixBoard[9]" src="../../assets/cards/EIGHT_SPADE.png" />
-          <img *ngIf="trixBoard[8]" src="../../assets/cards/SEVEN_SPADE.png" />
-        </div>
-        <div>
-          <img *ngIf="trixBoard[23]" src="../../assets/cards/ACE_CLUB.png" />
-          <img *ngIf="trixBoard[22]" src="../../assets/cards/KING_CLUB.png" />
-          <img *ngIf="trixBoard[21]" src="../../assets/cards/QUEEN_CLUB.png" />
-          <img *ngIf="trixBoard[20]" src="../../assets/cards/JACK_CLUB.png" />
-          <img *ngIf="trixBoard[19]" src="../../assets/cards/TEN_CLUB.png" />
-          <img *ngIf="trixBoard[18]" src="../../assets/cards/NINE_CLUB.png" />
-          <img *ngIf="trixBoard[17]" src="../../assets/cards/EIGHT_CLUB.png" />
-          <img *ngIf="trixBoard[16]" src="../../assets/cards/SEVEN_CLUB.png" />
-        </div>
-        <div>
-          <img *ngIf="trixBoard[31]" src="../../assets/cards/ACE_DIAMOND.png" />
           <img
-            *ngIf="trixBoard[30]"
+            *ngIf="getTrixBoardCard(7)"
+            src="../../assets/cards/ACE_HEART.png"
+          />
+          <img
+            *ngIf="getTrixBoardCard(6)"
+            src="../../assets/cards/KING_HEART.png"
+          />
+          <img
+            *ngIf="getTrixBoardCard(5)"
+            src="../../assets/cards/QUEEN_HEART.png"
+          />
+          <img
+            *ngIf="getTrixBoardCard(4)"
+            src="../../assets/cards/JACK_HEART.png"
+          />
+          <img
+            *ngIf="getTrixBoardCard(3)"
+            src="../../assets/cards/TEN_HEART.png"
+          />
+          <img
+            *ngIf="getTrixBoardCard(2)"
+            src="../../assets/cards/NINE_HEART.png"
+          />
+          <img
+            *ngIf="getTrixBoardCard(1)"
+            src="../../assets/cards/EIGHT_HEART.png"
+          />
+          <img
+            *ngIf="getTrixBoardCard(0)"
+            src="../../assets/cards/SEVEN_HEART.png"
+          />
+        </div>
+        <div>
+          <img
+            *ngIf="getTrixBoardCard(15)"
+            src="../../assets/cards/ACE_SPADE.png"
+          />
+          <img
+            *ngIf="getTrixBoardCard(14)"
+            src="../../assets/cards/KING_SPADE.png"
+          />
+          <img
+            *ngIf="getTrixBoardCard(13)"
+            src="../../assets/cards/QUEEN_SPADE.png"
+          />
+          <img
+            *ngIf="getTrixBoardCard(12)"
+            src="../../assets/cards/JACK_SPADE.png"
+          />
+          <img
+            *ngIf="getTrixBoardCard(11)"
+            src="../../assets/cards/TEN_SPADE.png"
+          />
+          <img
+            *ngIf="getTrixBoardCard(10)"
+            src="../../assets/cards/NINE_SPADE.png"
+          />
+          <img
+            *ngIf="getTrixBoardCard(9)"
+            src="../../assets/cards/EIGHT_SPADE.png"
+          />
+          <img
+            *ngIf="getTrixBoardCard(8)"
+            src="../../assets/cards/SEVEN_SPADE.png"
+          />
+        </div>
+        <div>
+          <img
+            *ngIf="getTrixBoardCard(23)"
+            src="../../assets/cards/ACE_CLUB.png"
+          />
+          <img
+            *ngIf="getTrixBoardCard(22)"
+            src="../../assets/cards/KING_CLUB.png"
+          />
+          <img
+            *ngIf="getTrixBoardCard(21)"
+            src="../../assets/cards/QUEEN_CLUB.png"
+          />
+          <img
+            *ngIf="getTrixBoardCard(20)"
+            src="../../assets/cards/JACK_CLUB.png"
+          />
+          <img
+            *ngIf="getTrixBoardCard(19)"
+            src="../../assets/cards/TEN_CLUB.png"
+          />
+          <img
+            *ngIf="getTrixBoardCard(18)"
+            src="../../assets/cards/NINE_CLUB.png"
+          />
+          <img
+            *ngIf="getTrixBoardCard(17)"
+            src="../../assets/cards/EIGHT_CLUB.png"
+          />
+          <img
+            *ngIf="getTrixBoardCard(16)"
+            src="../../assets/cards/SEVEN_CLUB.png"
+          />
+        </div>
+        <div>
+          <img
+            *ngIf="getTrixBoardCard(31)"
+            src="../../assets/cards/ACE_DIAMOND.png"
+          />
+          <img
+            *ngIf="getTrixBoardCard(30)"
             src="../../assets/cards/KING_DIAMOND.png"
           />
           <img
-            *ngIf="trixBoard[29]"
+            *ngIf="getTrixBoardCard(29)"
             src="../../assets/cards/QUEEN_DIAMOND.png"
           />
           <img
-            *ngIf="trixBoard[28]"
+            *ngIf="getTrixBoardCard(28)"
             src="../../assets/cards/JACK_DIAMOND.png"
           />
-          <img *ngIf="trixBoard[27]" src="../../assets/cards/TEN_DIAMOND.png" />
           <img
-            *ngIf="trixBoard[26]"
+            *ngIf="getTrixBoardCard(27)"
+            src="../../assets/cards/TEN_DIAMOND.png"
+          />
+          <img
+            *ngIf="getTrixBoardCard(26)"
             src="../../assets/cards/NINE_DIAMOND.png"
           />
           <img
-            *ngIf="trixBoard[25]"
+            *ngIf="getTrixBoardCard(25)"
             src="../../assets/cards/EIGHT_DIAMOND.png"
           />
           <img
-            *ngIf="trixBoard[24]"
+            *ngIf="getTrixBoardCard(24)"
             src="../../assets/cards/SEVEN_DIAMOND.png"
           />
         </div>
       </div>
-      <form *ngIf="availableGames.length > 0">
+      <div
+        class="game-select"
+        *ngIf="
+          this.gameState?.status === 'KINGDOM_SELECTION' &&
+          this.gameState?.gameOwner === 3
+        "
+      >
         <h2>Select Game</h2>
-        <div *ngFor="let game of availableGames; let index = index">
-          <input type="radio" name="game_select" [value]="index" />
+        <div
+          *ngFor="
+            let game of this.gameState?.player?.availableGames;
+            let index = index
+          "
+        >
+          <input
+            type="radio"
+            name="gameSelect"
+            [value]="index"
+            [checked]="index === 0"
+            (change)="onSelectGameChange($event.target)"
+          />
           <label>{{ game }}</label>
         </div>
-        <input type="submit" value="Confirm" />
-      </form>
+        <button (click)="submitSelectGame()">Confirm</button>
+      </div>
+      <div
+        class="game-select"
+        *ngIf="
+          this.gameState?.status === 'KINGDOM_SELECTION' &&
+          this.gameState?.gameOwner !== 3
+        "
+      >
+        <h2>{{ getGameOwnerName() }} is selecting a game</h2>
+      </div>
     </div>
     <div class="right">
       <div class="hand">
         <img
-          *ngFor="let card of cards"
+          *ngFor="let _ of [].constructor(getHandSize(2))"
           src="../../assets/cards/CARD_BACK_HORIZONTAL.png"
         />
       </div>
+      <div class="profile">
+        <label [ngStyle]="isTurn(2)">{{ getPlayer(2)?.name }}</label>
+        <label [ngStyle]="isGameOwner(2)">{{ getPlayer(2)?.score }}</label>
+      </div>
     </div>
     <div class="bottom">
+      <div class="profile">
+        <label [ngStyle]="isTurn(3)">{{ this.gameState?.player?.name }}</label>
+        <label [ngStyle]="isGameOwner(3)">{{
+          this.gameState?.player?.score
+        }}</label>
+      </div>
       <div class="hand">
         <button
-          *ngFor="let card of cards"
+          *ngFor="let card of this.gameState?.player?.hand; let index = index"
+          (click)="submitPlayCard(index)"
           [ngStyle]="getHandCardImage(card)"
         ></button>
       </div>

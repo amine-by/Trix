@@ -30,10 +30,15 @@
 }
 
 .top {
+  display: flex;
+  gap: 10px;
   grid-area: t;
 }
 
 .left {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   grid-area: l;
 }
 
@@ -42,21 +47,26 @@
 }
 
 .right {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   grid-area: r;
 }
 
 .bottom {
+  display: flex;
+  gap: 10px;
   grid-area: b;
 }
 
 .top img {
-  height: 80px;
+  height: 70px;
   margin-left: -25px;
 }
 
 .left img,
 .right img {
-  width: 80px;
+  width: 70px;
   margin-top: -25px;
 }
 
@@ -132,34 +142,30 @@
   margin-top: -60px;
 }
 
-form {
+.game-select {
   display: flex;
   align-items: center;
   flex-direction: column;
   gap: 10px;
-  background-color: white;
   border-radius: 10px;
   padding: 10px;
 }
 
-form div {
+.game-select div {
   width: 100%;
 }
 
-form input[type="radio"] {
+.game-select input[type="radio"] {
   margin-right: 10px;
 }
 
-form label, form h2 {
-  color: black;
+.game-select label,
+.game-select h2 {
+  color: white;
 }
 
-form input[type="submit"] {
-  border: none;
-  cursor: pointer;
-  background-color: orange;
-  height: 35px;
-  width: 100px;
-  font-size: 15px;
-  border-radius: 5px;
+.profile {
+  display: flex;
+  gap: 5px;
+  flex-direction: column;
 }

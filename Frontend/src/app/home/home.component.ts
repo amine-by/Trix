@@ -18,17 +18,22 @@ export class HomeComponent implements OnInit {
   ) {
     this.titleService.setTitle('Home');
   }
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.gameService.isPlayerInGame().subscribe({
+      next: (response) => response && this.router.navigate(['/game']),
+      error: (error) => console.error(error),
+    });
+  }
 
   createGame() {
     this.gameService.createGame().subscribe({
-      next: (response: boolean) => response && this.router.navigate(['/game']),
+      next: (response) => response && this.router.navigate(['/game']),
       error: (error) => console.error(error),
     });
   }
 
   signOut() {
     this.tokenService.logOut();
-    this.router.navigate(['/login'])
+    this.router.navigate(['/login']);
   }
 }

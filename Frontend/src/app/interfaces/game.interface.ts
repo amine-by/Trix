@@ -5,6 +5,7 @@ interface ICard {
 
 interface IPlayer {
   id: string;
+  name: string;
   score: number;
   hand: Array<ICard>;
   collectedCards: Array<ICard>;
@@ -13,6 +14,7 @@ interface IPlayer {
 
 interface IPlayerStatus {
   id: string;
+  name: string
   score: number;
   hand: number;
   collectedCards: number;
@@ -27,7 +29,7 @@ interface GameplayDto {
   trixBoard: Array<boolean> | null;
   normalBoard: Array<ICard> | null;
   player: IPlayer;
-  otherPlayers: IPlayerStatus;
+  otherPlayers: Array<IPlayerStatus>;
 }
 
 interface JoinGameDto {

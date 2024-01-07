@@ -1,7 +1,12 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { AvailableGamesDto, GameplayDto, JoinGameDto, MoveDto } from '../interfaces/game.interface';
+import {
+  AvailableGamesDto,
+  GameplayDto,
+  JoinGameDto,
+  MoveDto,
+} from '../interfaces/game.interface';
 
 const header = {
   headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
@@ -20,6 +25,10 @@ export class GameService {
       this.apiPrefix + 'available',
       header
     );
+  }
+
+  public isPlayerInGame(): Observable<boolean> {
+    return this.HttpClient.post<boolean>(this.apiPrefix + 'check', header);
   }
 
   public createGame(): Observable<boolean> {
