@@ -11,6 +11,9 @@ import { gameInterceptor } from './interceptors/game.interceptor';
 import { GamesComponent } from './games/games.component';
 import { RedirectComponent } from './redirect/redirect.component';
 import { RegisterComponent } from './register/register.component';
+import { ToastrModule } from 'ngx-toastr';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { errorInterceptor } from './interceptors/error.interceptor';
 
 @NgModule({
   declarations: [
@@ -27,8 +30,10 @@ import { RegisterComponent } from './register/register.component';
     BrowserModule,
     AppRoutingModule,
     HttpClientModule,
+    ToastrModule.forRoot(),
+    BrowserAnimationsModule,
   ],
-  providers: [gameInterceptor],
+  providers: [gameInterceptor, errorInterceptor],
   bootstrap: [AppComponent],
 })
 export class AppModule {}

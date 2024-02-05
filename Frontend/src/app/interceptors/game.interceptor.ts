@@ -22,8 +22,8 @@ export class GameInterceptor implements HttpInterceptor {
     if (token != null)
       authRequest = authRequest.clone({
         setHeaders: {
-          Authorization: "Bearer " + token
-        }
+          Authorization: 'Bearer ' + token,
+        },
       });
     return next.handle(authRequest);
   }

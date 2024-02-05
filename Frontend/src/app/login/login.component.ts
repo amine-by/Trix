@@ -1,3 +1,4 @@
+import { ToastrService } from 'ngx-toastr';
 import { TokenService } from './../services/token.service';
 import { AuthService } from './../services/auth.service';
 import { Component } from '@angular/core';
@@ -18,7 +19,8 @@ export class LoginComponent {
     private titleService: Title,
     private router: Router,
     private authService: AuthService,
-    private tokenService: TokenService
+    private tokenService: TokenService,
+    private toastrService: ToastrService
   ) {
     this.titleService.setTitle('Login');
   }
@@ -36,9 +38,9 @@ export class LoginComponent {
     this.authService.authenticateUser(loginDto).subscribe({
       next: (response) => {
         this.tokenService.setToken(response.accessToken);
+        this.toastrService.success('Logged in successfully!');
         this.router.navigate(['/']);
       },
-      error: (error) => console.error(error),
     });
   }
 

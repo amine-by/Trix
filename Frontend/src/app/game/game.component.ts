@@ -46,7 +46,6 @@ export class GameComponent implements OnInit {
           }
         );
       },
-      error: (error) => console.error(error),
     });
   }
 
@@ -66,7 +65,6 @@ export class GameComponent implements OnInit {
             this.gameState = response;
             this.updateNormalBoard();
           },
-          error: (error) => console.error(error),
         });
   }
 
@@ -82,7 +80,6 @@ export class GameComponent implements OnInit {
             this.gameState = response;
             this.updateNormalBoard();
           },
-          error: (error) => console.error(error),
         });
   }
 

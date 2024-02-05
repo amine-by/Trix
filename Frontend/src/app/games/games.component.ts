@@ -12,7 +12,11 @@ import { Router } from '@angular/router';
 export class GamesComponent implements OnInit {
   availableGames: Array<string> = [];
 
-  constructor(private titleService: Title, private gameService: GameService, private router: Router) {
+  constructor(
+    private titleService: Title,
+    private gameService: GameService,
+    private router: Router
+  ) {
     this.titleService.setTitle('Games');
   }
   ngOnInit(): void {
@@ -20,7 +24,6 @@ export class GamesComponent implements OnInit {
       next: (response: AvailableGamesDto) => {
         this.availableGames = response.games;
       },
-      error: (error) => console.error(error),
     });
   }
 
@@ -30,7 +33,6 @@ export class GamesComponent implements OnInit {
     };
     this.gameService.joinGame(joinGameDto).subscribe({
       next: (response) => response && this.router.navigate(['/game']),
-      error: (error) => console.error(error),
     });
   }
 }

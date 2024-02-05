@@ -21,14 +21,12 @@ export class HomeComponent implements OnInit {
   ngOnInit(): void {
     this.gameService.isPlayerInGame().subscribe({
       next: (response) => response && this.router.navigate(['/game']),
-      error: (error) => console.error(error),
     });
   }
 
   createGame() {
     this.gameService.createGame().subscribe({
       next: (response) => response && this.router.navigate(['/game']),
-      error: (error) => console.error(error),
     });
   }
 

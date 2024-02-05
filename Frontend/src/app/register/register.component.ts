@@ -3,6 +3,7 @@ import { Title } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { TokenService } from '../services/token.service';
 import { AuthService } from '../services/auth.service';
+import { ToastrService } from 'ngx-toastr';
 
 const REDIRECT_URI = `?redirect_uri=${window.location.origin}/redirect`;
 
@@ -20,7 +21,8 @@ export class RegisterComponent {
     private titleService: Title,
     private router: Router,
     private authService: AuthService,
-    private tokenService: TokenService
+    private tokenService: TokenService,
+    private toastrService: ToastrService
   ) {
     this.titleService.setTitle('Register');
   }
@@ -46,9 +48,9 @@ export class RegisterComponent {
     this.authService.registerUser(registerDto).subscribe({
       next: (response) => {
         this.tokenService.setToken(response.accessToken);
+        this.toastrService.success('Account created!');
         this.router.navigate(['/']);
       },
-      error: (error) => console.error(error),
     });
   }
 
